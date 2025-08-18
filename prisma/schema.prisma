@@ -1,0 +1,183 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Admin table for restaurant administrators
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+// Staff table for all restaurant staff (waiters, kitchen, managers)
+model Staff {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  role        StaffRole
+  phone       String?
+  isActive    Boolean  @default(true)
+  supabaseId  String   @unique // Supabase Auth user ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastLogin   DateTime?
+
+  // Relations
+  orders      Order[]
+
+  @@map("staff")
+}
+
+enum StaffRole {
+  WAITER
+  KITCHEN
+  MANAGER
+}
+
+// Category table for organizing food items
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  foodItems   FoodItem[]
+
+  @@map("categories")
+}
+
+// Portion table for managing portion sizes
+model Portion {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  foodItemPortions FoodItemPortion[]
+  orderItems       OrderItem[]
+
+  @@map("portions")
+}
+
+// Food items table for managing menu items
+model FoodItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  categoryId  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  category         Category          @relation(fields: [categoryId], references: [id])
+  foodItemPortions FoodItemPortion[]
+  orderItems       OrderItem[]
+
+  @@map("food_items")
+}
+
+// Junction table for many-to-many relationship between FoodItem and Portion with price
+model FoodItemPortion {
+  id         String   @id @default(cuid())
+  foodItemId String
+  portionId  String
+  price      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  portion  Portion  @relation(fields: [portionId], references: [id])
+
+  // Ensure one food item can't have duplicate portions
+  @@unique([foodItemId, portionId])
+  @@map("food_item_portions")
+}
+
+// Orders table for managing customer orders
+model Order {
+  id          Int         @id @default(autoincrement())
+  tableNumber Int
+  staffId     String
+  status      OrderStatus @default(PENDING)
+  totalAmount Float       @default(0)
+  notes       String?
+  
+  // Optional customer information for billing
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  staff      Staff       @relation(fields: [staffId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+// Order items table for individual items in an order
+model OrderItem {
+  id               String  @id @default(cuid())
+  orderId          Int
+  foodItemId       String
+  portionId        String
+  quantity         Int
+  unitPrice        Float
+  totalPrice       Float
+  specialRequests  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id])
+  portion  Portion  @relation(fields: [portionId], references: [id])
+
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+// Settings table for storing admin preferences
+model Settings {
+  id               String   @id @default(cuid())
+  serviceChargeRate Float   @default(0.0) // Percentage (e.g., 10.5 for 10.5%)
+  theme            String   @default("blue") // Theme color
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("settings")
+}
