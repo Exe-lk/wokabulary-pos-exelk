@@ -27,6 +27,10 @@ interface ThemeContextType {
     primaryBgLight: string;
     primaryBorder: string;
     accent: string;
+    sidebarGradient: string;
+    mainGradient: string;
+    buttonGradient: string;
+    buttonGradientHover: string;
   };
 }
 
@@ -59,6 +63,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'blue-100',
         primaryBorder: 'blue-200',
         accent: 'blue-500',
+        sidebarGradient: 'from-slate-900 via-blue-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-blue-50 to-slate-50',
+        buttonGradient: 'from-blue-600 to-cyan-600',
+        buttonGradientHover: 'from-blue-700 to-cyan-700',
       },
       green: {
         primary: 'green-600',
@@ -68,6 +76,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'green-100',
         primaryBorder: 'green-200',
         accent: 'green-500',
+        sidebarGradient: 'from-slate-900 via-green-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-green-50 to-slate-50',
+        buttonGradient: 'from-green-600 to-emerald-600',
+        buttonGradientHover: 'from-green-700 to-emerald-700',
       },
       purple: {
         primary: 'purple-600',
@@ -77,6 +89,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'purple-100',
         primaryBorder: 'purple-200',
         accent: 'purple-500',
+        sidebarGradient: 'from-slate-900 via-purple-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-purple-50 to-slate-50',
+        buttonGradient: 'from-purple-600 to-indigo-600',
+        buttonGradientHover: 'from-purple-700 to-indigo-700',
       },
       red: {
         primary: 'red-600',
@@ -86,6 +102,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'red-100',
         primaryBorder: 'red-200',
         accent: 'red-500',
+        sidebarGradient: 'from-slate-900 via-red-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-red-50 to-slate-50',
+        buttonGradient: 'from-red-600 to-pink-600',
+        buttonGradientHover: 'from-red-700 to-pink-700',
       },
       yellow: {
         primary: 'yellow-600',
@@ -95,6 +115,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'yellow-100',
         primaryBorder: 'yellow-200',
         accent: 'yellow-500',
+        sidebarGradient: 'from-slate-900 via-yellow-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-yellow-50 to-slate-50',
+        buttonGradient: 'from-yellow-600 to-orange-600',
+        buttonGradientHover: 'from-yellow-700 to-orange-700',
       },
       indigo: {
         primary: 'indigo-600',
@@ -104,6 +128,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         primaryBgLight: 'indigo-100',
         primaryBorder: 'indigo-200',
         accent: 'indigo-500',
+        sidebarGradient: 'from-slate-900 via-indigo-900 to-slate-900',
+        mainGradient: 'from-slate-50 via-indigo-50 to-slate-50',
+        buttonGradient: 'from-indigo-600 to-purple-600',
+        buttonGradientHover: 'from-indigo-700 to-purple-700',
       },
     };
 

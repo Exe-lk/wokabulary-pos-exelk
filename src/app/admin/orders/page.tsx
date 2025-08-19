@@ -167,12 +167,8 @@ export default function OrdersManagement() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      {/* <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
-            <p className="text-gray-600 mt-1">View and manage all restaurant orders</p>
-          </div>
           <div className="mt-4 sm:mt-0 flex space-x-2">
             <button
               onClick={() => fetchOrders()}
@@ -185,7 +181,7 @@ export default function OrdersManagement() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">

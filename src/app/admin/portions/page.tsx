@@ -55,10 +55,6 @@ export default function PortionsPage() {
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Portion Management</h1>
-              <p className="text-gray-600 mt-1">Manage portion sizes for menu items</p>
-            </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center"

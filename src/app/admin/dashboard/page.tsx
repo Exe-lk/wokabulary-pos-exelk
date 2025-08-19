@@ -136,6 +136,63 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* Additional Quick Actions */}
+      <div className="mt-8">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">More Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
+            onClick={() => router.push('/admin/waiter-orders')}
+            className={`p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 hover:border-${themeClasses.primary}`}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 bg-${themeClasses.primaryBg} rounded-lg flex items-center justify-center`}>
+                <svg className={`w-6 h-6 text-${themeClasses.primary}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Waiter Orders</div>
+                <div className="text-sm text-gray-600">Place orders and manage waiter activities</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/admin/categories')}
+            className={`p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 hover:border-${themeClasses.primary}`}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 bg-${themeClasses.primaryBg} rounded-lg flex items-center justify-center`}>
+                <svg className={`w-6 h-6 text-${themeClasses.primary}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Categories</div>
+                <div className="text-sm text-gray-600">Manage menu categories</div>
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            onClick={() => router.push('/admin/reports')}
+            className={`p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 hover:border-${themeClasses.primary}`}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-10 h-10 bg-${themeClasses.primaryBg} rounded-lg flex items-center justify-center`}>
+                <svg className={`w-6 h-6 text-${themeClasses.primary}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Reports</div>
+                <div className="text-sm text-gray-600">View analytics and reports</div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   );
 } 
