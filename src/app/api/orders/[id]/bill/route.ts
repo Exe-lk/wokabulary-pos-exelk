@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import nodemailer from 'nodemailer';
+import axios from 'axios';
 
 const prisma = new PrismaClient();
 
@@ -20,7 +21,6 @@ export async function POST(
       );
     }
 
-    // Update order with customer information
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
@@ -53,11 +53,9 @@ export async function POST(
       },
     });
 
-    // Generate bill URL
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const billUrl = `${baseUrl}/bill/${orderId}`;
 
-    // Create nodemailer transporter
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -66,7 +64,6 @@ export async function POST(
       },
     });
 
-    // Prepare email content
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -124,7 +121,6 @@ export async function POST(
       </html>
     `;
 
-    // Send email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: customerEmail,
@@ -132,16 +128,61 @@ export async function POST(
       html: emailHtml,
     });
 
-    // Update order status to COMPLETED after successfully sending bill
+    if (customerPhone) {
+      try {
+        const apiUrl = process.env.SMS_API_URL;
+        const apiKey = process.env.SMS_API_KEY;
+
+        const smsMessage = `Dear ${customerName || 'Valued Customer'},
+
+Your bill for Order #${orderId} is ready!
+
+Total Amount: $${updatedOrder.totalAmount.toFixed(2)}
+Table: ${updatedOrder.tableNumber}
+
+View your bill: ${billUrl}
+
+Thank you for dining with us!
+
+Best Regards,
+Restaurant Team`;
+
+        const requestBody = {
+          to: customerPhone.startsWith('+') ? customerPhone : `+94${customerPhone.substring(1)}`,
+          message: smsMessage,
+        };
+
+        console.log("Sending SMS to:", customerPhone);
+        console.log("SMS Request Body:", requestBody);
+        console.log("API URL:", apiUrl);
+        console.log("API Key:", apiKey);
+
+         const response = await axios.post(`http://${apiUrl}`, requestBody, {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            Authorization: apiKey,
+          },
+        });
+        console.log("SMS Response:", response);
+        console.log("SMS Response:", response.data);
+
+
+        console.log("SMS sent successfully");
+      } catch (smsError) {
+        console.error('SMS sending failed:', smsError);
+      }
+    }
+
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: 'COMPLETED',
+        status: 'SERVED',
       },
     });
 
     return NextResponse.json({
-      message: 'Bill sent successfully',
+      message: 'Bill sent successfully via email' + (customerPhone ? ' and SMS' : ''),
       billUrl,
     });
   } catch (error) {
