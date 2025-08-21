@@ -142,6 +142,7 @@ enum StaffRole {
   WAITER
   KITCHEN
   MANAGER
+  CASHIER
 }
 
 enum OrderStatus {

@@ -121,7 +121,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{adminUser.name}</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
+                  <p className="text-xs text-gray-500">
+                    {adminUser.role === 'CASHIER' ? 'Cashier' : 'Administrator'}
+                  </p>
                 </div>
               </div>
               <div className="sm:hidden">

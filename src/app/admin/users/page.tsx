@@ -7,7 +7,7 @@ interface StaffUser {
   id: string;
   name: string;
   email: string;
-  role: "WAITER" | "KITCHEN" | "MANAGER";
+  role: "WAITER" | "KITCHEN" | "MANAGER" | "CASHIER";
   isActive: boolean;
   phone: string | null;
   createdAt: string;
@@ -62,6 +62,8 @@ export default function ManageUsers() {
         return "bg-orange-100 text-orange-800";
       case "WAITER":
         return "bg-blue-100 text-blue-800";
+      case "CASHIER":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }

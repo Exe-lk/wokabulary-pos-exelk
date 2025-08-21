@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import Image from "next/image";
+import { useEffect } from "react";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -22,6 +23,21 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const { getThemeClasses } = useTheme();
   const themeClasses = getThemeClasses();
+
+  // Get user role for display
+  const [userRole, setUserRole] = useState('admin');
+  
+  useEffect(() => {
+    const adminUser = localStorage.getItem('adminUser');
+    if (adminUser) {
+      try {
+        const user = JSON.parse(adminUser);
+        setUserRole(user.role);
+      } catch (error) {
+        console.error('Error parsing admin user data:', error);
+      }
+    }
+  }, []);
 
   const navigationItems = [
     {
@@ -110,8 +126,26 @@ export default function AdminSidebar({
   ];
 
   const handleLogout = () => {
+    const adminUser = localStorage.getItem('adminUser');
+    let userRole = 'admin';
+    
+    if (adminUser) {
+      try {
+        const user = JSON.parse(adminUser);
+        userRole = user.role;
+      } catch (error) {
+        console.error('Error parsing admin user data:', error);
+      }
+    }
+    
     localStorage.removeItem('adminUser');
-    router.push('/admin/login');
+    
+    // Redirect based on role
+    if (userRole === 'CASHIER') {
+      router.push('/'); // Staff login page
+    } else {
+      router.push('/admin/login'); // Admin login page
+    }
   };
 
   const sidebarWidth = isCollapsed ? 'w-16' : 'w-64';
@@ -147,7 +181,9 @@ export default function AdminSidebar({
                     className="rounded-lg"
                   />
                 </div>
-                <h1 className="text-lg font-bold text-white">Admin</h1>
+                <h1 className="text-lg font-bold text-white">
+                  {userRole === 'CASHIER' ? 'Cashier' : 'Admin'}
+                </h1>
               </div>
             )}
             {isCollapsed && (

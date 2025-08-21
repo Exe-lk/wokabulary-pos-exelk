@@ -47,6 +47,11 @@ export default function Home() {
         case 'MANAGER':
           router.push("/manager");
           break;
+        case 'CASHIER':
+          // Store cashier data in localStorage for admin dashboard access
+          localStorage.setItem('adminUser', JSON.stringify(data.user));
+          router.push("/admin/dashboard");
+          break;
         default:
           throw new Error('Invalid user role');
       }
