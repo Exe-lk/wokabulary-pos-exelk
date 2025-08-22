@@ -61,7 +61,7 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/settings');
+        const response = await fetch('https://wokabulary.netlify.app/api/settings');
         if (response.ok) {
           const settings = await response.json();
           setServiceChargeRate(settings.serviceChargeRate || 0);

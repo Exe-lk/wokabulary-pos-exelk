@@ -25,7 +25,7 @@ export default function ManageUsers() {
   // Fetch staff data from API
   const fetchStaff = async () => {
     try {
-      const response = await fetch('/api/admin/staff');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/staff');
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -88,7 +88,7 @@ export default function ManageUsers() {
 
   const handleToggleUserStatus = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/staff/${userId}/toggle-status`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/staff/${userId}/toggle-status`, {
         method: 'PATCH',
       });
 

@@ -56,7 +56,7 @@ export default function OrdersManagement() {
         params.append('status', statusFilter);
       }
       
-      const response = await fetch(`/api/admin/orders?${params}`);
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/orders?${params}`);
       if (response.ok) {
         const data = await response.json();
         setOrders(data);

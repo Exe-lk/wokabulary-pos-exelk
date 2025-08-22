@@ -36,7 +36,7 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
     setError("");
 
     try {
-      const response = await fetch('/api/admin/portions', {
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/portions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
