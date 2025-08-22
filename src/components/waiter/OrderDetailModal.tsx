@@ -34,6 +34,17 @@ interface Order {
     email: string;
   };
   orderItems: OrderItem[];
+  customer?: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+  payments?: {
+    id: string;
+    paymentMode: string;
+    receivedAmount: number;
+    balance: number;
+  }[];
 }
 
 interface OrderDetailModalProps {
@@ -127,7 +138,7 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
   const total = subtotal + serviceCharge;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -165,6 +176,14 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                   <span className="font-medium">Served by:</span> {order.staff.name}
                 </span>
               </div>
+              {order.customer && (
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">
+                    <span className="font-medium">Customer:</span> {order.customer.name} ({order.customer.phone})
+                  </span>
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -179,6 +198,14 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
               <div className="text-sm text-gray-700">
                 <span className="font-medium">Last Updated:</span> {formatDate(order.updatedAt)} at {formatTime(order.updatedAt)}
               </div>
+              {order.payments && order.payments.length > 0 && (
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">Payment:</span> {order.payments[0].paymentMode} - Rs. {order.payments[0].receivedAmount.toFixed(2)}
+                  {order.payments[0].balance > 0 && (
+                    <span className="text-green-600 ml-1">(Balance: Rs. {order.payments[0].balance.toFixed(2)})</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -218,10 +245,10 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
                     </div>
                     <div className="text-right ml-4">
                       <p className="text-sm font-medium text-gray-900">
-                        ${item.totalPrice.toFixed(2)}
+                        Rs. {item.totalPrice.toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-600">
-                        ${item.unitPrice.toFixed(2)} each
+                        Rs. {item.unitPrice.toFixed(2)} each
                       </p>
                     </div>
                   </div>
@@ -238,17 +265,17 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-700">Subtotal:</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
               </div>
               {serviceChargeRate > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-700">Service Charge ({serviceChargeRate}%):</span>
-                  <span className="font-medium">${serviceCharge.toFixed(2)}</span>
+                  <span className="font-medium">Rs. {serviceCharge.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-300">
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>Rs. {total.toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -63,71 +63,61 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-cyan-900 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div 
-        className="absolute inset-0 opacity-50"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}
-      ></div>
-      
-      {/* Animated Background Elements */}
-      <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-40 w-72 h-72 bg-teal-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4 relative">
+      {/* Professional Ocean Blue Background Pattern */}
+      <div className="absolute inset-0 opacity-30" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0l28-28v2L54 40h-2zm4 0l24-24v2L58 40h-2zm4 0l20-20v2L62 40h-2zm4 0l16-16v2L66 40h-2zm4 0l12-12v2L70 40h-2zm4 0l8-8v2l-6 6h-2zm4 0l4-4v2l-2 2h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      }}></div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Header with Logo */}
+        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="mb-6">
-            <div className="w-20 h-20 mx-auto mb-4 relative">
-              <Image
-                src="/images/logo.png"
-                alt="Restaurant Logo"
-                width={80}
-                height={80}
-                className="rounded-2xl shadow-2xl"
-                priority
-              />
+            <div className="w-24 h-24 mx-auto mb-4 relative">
+              <div className="w-full h-full bg-white rounded-2xl shadow-xl p-4 border border-blue-100">
+                <Image
+                  src="/images/logo.png"
+                  alt="Restaurant Logo"
+                  width={80}
+                  height={80}
+                  className="rounded-xl object-cover"
+                  priority
+                />
+              </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
-            Staff Portal
-          </h1>
-          <p className="text-cyan-200 text-lg font-medium">
+          <p className="text-blue-700 font-medium text-center text-2xl font-bold">
             Restaurant Management System
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-white rounded-2xl shadow-2xl border border-blue-100 p-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-blue-900 mb-1 text-center">
+              Sign In
+            </h2>
+          </div>
+
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-white mb-3">
+              <label htmlFor="email" className="block text-sm font-medium text-blue-900 mb-2">
                 Email Address
               </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-cyan-200 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                  placeholder="staff@restaurant.com"
-                  required
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
-              </div>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-blue-50/50"
+                placeholder="Enter your email"
+                required
+              />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-white mb-3">
+              <label htmlFor="password" className="block text-sm font-medium text-blue-900 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -136,14 +126,14 @@ export default function Home() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-cyan-200 focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm pr-12"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-xl text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 pr-12 bg-blue-50/50"
                   placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-cyan-300 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-400 hover:text-blue-600 transition-colors"
                 >
                   {showPassword ? (
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,12 +150,12 @@ export default function Home() {
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-400/30 rounded-xl p-4 backdrop-blur-sm">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div className="flex items-center">
-                  <svg className="h-5 w-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-red-200 text-sm font-medium">{error}</p>
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
                 </div>
               </div>
             )}
@@ -173,71 +163,35 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   <span>Signing in...</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center">
-                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span>Sign in to Dashboard</span>
-                </div>
+                <span>Sign In</span>
               )}
             </button>
           </form>
 
-          {/* Admin Link */}
-          {/* <div className="text-center mt-6">
-            <p className="text-sm text-cyan-200">
-              Are you an administrator?{" "}
-              <a
-                href="/admin/login"
-                className="text-white hover:text-cyan-300 font-semibold transition-colors duration-200 underline decoration-cyan-400/50 underline-offset-2 hover:decoration-cyan-300"
-              >
-                Sign in here
-              </a>
+          {/* Help Section */}
+          <div className="mt-6 pt-6 border-t border-blue-100">
+            <p className="text-xs text-blue-600 text-center">
+              For technical support, contact your system administrator
             </p>
-          </div> */}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-white/60">
-            © 2024 Restaurant Management System by EXE.LK
+        <div className="text-center mt-6">
+          <p className="text-xs text-blue-600">
+            © 2025 Restaurant Management System by{" "}
+            <span className="font-semibold text-blue-800">EXE.LK</span>
           </p>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </div>
   );
 }

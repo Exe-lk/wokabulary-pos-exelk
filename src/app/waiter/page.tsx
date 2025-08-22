@@ -303,7 +303,7 @@ export default function WaiterDashboard() {
                   disabled={isPlacingOrder}
                   className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isPlacingOrder ? 'Placing Order...' : `Place Order - $${orderState.totalAmount.toFixed(2)}`}
+                  {isPlacingOrder ? 'Placing Order...' : `Place Order - Rs. ${orderState.totalAmount.toFixed(2)}`}
                 </button>
               </div>
             )}

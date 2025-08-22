@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ReduxProvider } from "@/redux/provider";
 
 interface AdminUser {
@@ -23,8 +23,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { getThemeClasses } = useTheme();
-  const themeClasses = getThemeClasses();
 
   // Check if we're on the login page
   const isLoginPage = pathname === '/admin/login';
@@ -61,7 +59,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br ${themeClasses.sidebarGradient} flex items-center justify-center`}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/50"></div>
       </div>
     );
@@ -74,7 +72,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const sidebarWidth = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64';
 
   return (
-    <div className={`h-screen bg-gradient-to-br ${themeClasses.mainGradient} flex overflow-hidden`}>
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex overflow-hidden">
       {/* Sidebar - Fixed position */}
       <AdminSidebar 
         isOpen={sidebarOpen} 
@@ -114,7 +112,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex items-center space-x-3">
-                <div className={`w-8 h-8 bg-gradient-to-br ${themeClasses.buttonGradient} rounded-full flex items-center justify-center`}>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
                     {adminUser.name.charAt(0).toUpperCase()}
                   </span>
@@ -127,7 +125,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               <div className="sm:hidden">
-                <div className={`w-8 h-8 bg-gradient-to-br ${themeClasses.buttonGradient} rounded-full flex items-center justify-center`}>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">
                     {adminUser.name.charAt(0).toUpperCase()}
                   </span>

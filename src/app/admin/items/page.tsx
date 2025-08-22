@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AddFoodItemModal from "@/components/AddFoodItemModal";
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 interface FoodItemPortion {
   id: string;
@@ -33,6 +34,8 @@ interface FoodItem {
 
 export default function ManageItems() {
   const [items, setItems] = useState<FoodItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<FoodItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -45,6 +48,7 @@ export default function ManageItems() {
       }
       const data = await response.json();
       setItems(data);
+      setFilteredItems(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -55,6 +59,40 @@ export default function ManageItems() {
   useEffect(() => {
     fetchFoodItems();
   }, []);
+
+  // Filter items based on search term
+  useEffect(() => {
+    const filtered = items.filter(item => {
+      const searchLower = searchTerm.toLowerCase();
+
+      // Search in item name
+      if (item.name.toLowerCase().includes(searchLower)) return true;
+
+      // Search in item description
+      if (item.description && item.description.toLowerCase().includes(searchLower)) return true;
+
+      // Search in category name
+      if (item.category.name.toLowerCase().includes(searchLower)) return true;
+
+      // Search in category description
+      if (item.category.description && item.category.description.toLowerCase().includes(searchLower)) return true;
+
+      // Search in portion names
+      if (item.foodItemPortions.some(portion =>
+        portion.portion.name.toLowerCase().includes(searchLower) ||
+        (portion.portion.description && portion.portion.description.toLowerCase().includes(searchLower))
+      )) return true;
+
+      // Search in prices (convert price to string for searching)
+      if (item.foodItemPortions.some(portion =>
+        portion.price.toString().includes(searchLower) ||
+        formatPrice(portion.price).toLowerCase().includes(searchLower)
+      )) return true;
+
+      return false;
+    });
+    setFilteredItems(filtered);
+  }, [searchTerm, items]);
 
   const handleFoodItemAdded = () => {
     fetchFoodItems();
@@ -97,20 +135,17 @@ export default function ManageItems() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
+    return `Rs. ${price.toLocaleString('en-LK')}`;
   };
 
   const getPriceRange = (portions: FoodItemPortion[]) => {
     if (portions.length === 0) return 'N/A';
     if (portions.length === 1) return formatPrice(portions[0].price);
-    
+
     const prices = portions.map(p => p.price).sort((a, b) => a - b);
     const minPrice = prices[0];
     const maxPrice = prices[prices.length - 1];
-    
+
     if (minPrice === maxPrice) return formatPrice(minPrice);
     return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
   };
@@ -118,7 +153,7 @@ export default function ManageItems() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -132,13 +167,26 @@ export default function ManageItems() {
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           <span>Add Food Item</span>
         </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="max-w-md">
+          <input
+            type="text"
+            placeholder="Search by name, category, portion, or price..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
       </div>
 
       {error && (
@@ -161,7 +209,7 @@ export default function ManageItems() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center">
@@ -190,7 +238,7 @@ export default function ManageItems() {
                       {item.foodItemPortions.map((portion) => (
                         <div key={portion.id} className="text-sm">
                           <span className="text-gray-700">{portion.portion.name}</span>
-                          <span className="text-purple-600 font-medium ml-2">
+                          <span className="text-blue-600 font-medium ml-2">
                             {formatPrice(portion.price)}
                           </span>
                         </div>
@@ -204,32 +252,40 @@ export default function ManageItems() {
                   </td>
                   <td className="py-4 px-4">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        item.isActive
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.isActive
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {item.isActive ? "Available" : "Unavailable"}
                     </span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-2">
-                      <button
+                      {/* <button
                         onClick={() => handleEditItem(item.id)}
-                        className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Edit
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => handleToggleAvailability(item.id)}
-                        className={`text-sm font-medium ${
-                          item.isActive
+                        className={`flex items-center gap-1 text-sm font-medium ${item.isActive
                             ? "text-red-600 hover:text-red-800"
                             : "text-green-600 hover:text-green-800"
-                        }`}
+                          }`}
                       >
-                        {item.isActive ? "Disable" : "Enable"}
+                        {item.isActive ? (
+                          <>
+                            <FaTimesCircle className="text-red-600" />
+                            Disable
+                          </>
+                        ) : (
+                          <>
+                            <FaCheckCircle className="text-green-600" />
+                            Enable
+                          </>
+                        )}
                       </button>
                     </div>
                   </td>
@@ -238,33 +294,55 @@ export default function ManageItems() {
             </tbody>
           </table>
 
-          {items.length === 0 && (
+          {filteredItems.length === 0 && (
             <div className="text-center py-12">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No food items</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by creating your first food item.
-              </p>
-              <div className="mt-6">
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  Add Food Item
-                </button>
-              </div>
+              {searchTerm ? (
+                <>
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No items found</h3>
+                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search terms.</p>
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="mx-auto h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No food items</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Get started by creating your first food item.
+                  </p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors"
+                    >
+                      Add Food Item
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

@@ -14,6 +14,8 @@ interface Portion {
 
 export default function PortionsPage() {
   const [portions, setPortions] = useState<Portion[]>([]);
+  const [filteredPortions, setFilteredPortions] = useState<Portion[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -26,6 +28,7 @@ export default function PortionsPage() {
       }
       const data = await response.json();
       setPortions(data);
+      setFilteredPortions(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -37,6 +40,15 @@ export default function PortionsPage() {
     fetchPortions();
   }, []);
 
+  // Filter portions based on search term
+  useEffect(() => {
+    const filtered = portions.filter(portion =>
+      portion.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (portion.description && portion.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredPortions(filtered);
+  }, [searchTerm, portions]);
+
   const handlePortionAdded = () => {
     fetchPortions();
   };
@@ -44,7 +56,7 @@ export default function PortionsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -54,16 +66,28 @@ export default function PortionsPage() {
       <div className="bg-white rounded-lg shadow">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium text-gray-900">Portion Sizes</h2>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors flex items-center"
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-md hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Portion
             </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="max-w-md">
+            <input
+              type="text"
+              placeholder="Search portions by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
 
@@ -75,24 +99,36 @@ export default function PortionsPage() {
             </div>
           )}
 
-          {portions.length === 0 ? (
+          {filteredPortions.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No portions</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating a new portion size.</p>
-              <div className="mt-6">
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              {searchTerm ? (
+                <>
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Add Portion
-                </button>
-              </div>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No portions found</h3>
+                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search terms.</p>
+                </>
+              ) : (
+                <>
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No portions</h3>
+                  <p className="mt-1 text-sm text-gray-500">Get started by creating a new portion size.</p>
+                  {/* <div className="mt-6">
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Portion
+                    </button>
+                  </div> */}
+                </>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -111,13 +147,13 @@ export default function PortionsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {portions.map((portion) => (
+                  {filteredPortions.map((portion) => (
                     <tr key={portion.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{portion.name}</div>
@@ -139,14 +175,14 @@ export default function PortionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(portion.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-purple-600 hover:text-purple-900 mr-3">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button className="text-blue-600 hover:text-blue-900 mr-3">
                           Edit
                         </button>
                         <button className="text-red-600 hover:text-red-900">
                           Delete
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

@@ -71,7 +71,7 @@ export default function OrderCart() {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-gray-900 truncate">{item.foodItemName}</h4>
                     <p className="text-xs text-gray-600">{item.portionName}</p>
-                    <p className="text-xs text-green-600 font-medium">${item.unitPrice.toFixed(2)} each</p>
+                    <p className="text-xs text-green-600 font-medium">Rs. {item.unitPrice.toFixed(2)} each</p>
                   </div>
                   <button
                     onClick={() => handleRemoveItem(item.id)}
@@ -101,7 +101,7 @@ export default function OrderCart() {
                     </button>
                   </div>
                   <div className="text-sm font-medium text-gray-900">
-                    ${item.totalPrice.toFixed(2)}
+                    Rs. {item.totalPrice.toFixed(2)}
                   </div>
                 </div>
 
@@ -140,7 +140,7 @@ export default function OrderCart() {
         <div className="p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-gray-900">Total</span>
-            <span className="text-xl font-bold text-green-600">${totalAmount.toFixed(2)}</span>
+            <span className="text-xl font-bold text-green-600">Rs. {totalAmount.toFixed(2)}</span>
           </div>
         </div>
       )}

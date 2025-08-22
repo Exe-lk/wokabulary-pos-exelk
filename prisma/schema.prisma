@@ -37,6 +37,19 @@ model Staff {
   @@map("staff")
 }
 
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]
+  payments  Payment[]
+
+  @@map("customers")
+}
+
 model Category {
   id          String     @id @default(cuid())
   name        String     @unique
@@ -104,8 +117,12 @@ model Order {
   customerEmail String?
   customerName  String?
   customerPhone String?
+  customerId    String?
+  billNumber    String?
   orderItems    OrderItem[]
+  customer      Customer?   @relation(fields: [customerId], references: [id])
   staff         Staff       @relation(fields: [staffId], references: [id])
+  payments      Payment[]
 
   @@map("orders")
 }
@@ -126,6 +143,23 @@ model OrderItem {
   portion         Portion  @relation(fields: [portionId], references: [id])
 
   @@map("order_items")
+}
+
+model Payment {
+  id             String      @id @default(cuid())
+  orderId        Int
+  customerId     String
+  amount         Float
+  receivedAmount Float
+  balance        Float
+  paymentDate    DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  paymentMode    PaymentMode
+  customer       Customer    @relation(fields: [customerId], references: [id])
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
 
 model Settings {
@@ -152,4 +186,9 @@ enum OrderStatus {
   READY
   SERVED
   CANCELLED
+}
+
+enum PaymentMode {
+  CASH
+  CARD
 }

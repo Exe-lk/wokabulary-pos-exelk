@@ -381,7 +381,7 @@ export default function KitchenDashboard() {
                                 {item.foodItem.name}
                               </p>
                               <p className="text-sm text-gray-600">
-                                {item.portion.name} • ${item.unitPrice.toFixed(2)} each
+                                {item.portion.name} • Rs. {item.unitPrice.toFixed(2)} each
                               </p>
                               {item.specialRequests && (
                                 <p className="text-sm text-orange-600 mt-1">
@@ -393,7 +393,7 @@ export default function KitchenDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="font-medium text-gray-900">
-                            ${item.totalPrice.toFixed(2)}
+                            Rs. {item.totalPrice.toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -414,7 +414,7 @@ export default function KitchenDashboard() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Total:</span>
                       <span className="text-lg font-bold text-gray-900">
-                        ${order.totalAmount.toFixed(2)}
+                        Rs. {order.totalAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>

@@ -267,8 +267,8 @@ export default function BillPage() {
                         </td>
                         <td className="py-4 text-center text-gray-700">{item.portion.name}</td>
                         <td className="py-4 text-center text-gray-700">{item.quantity}</td>
-                        <td className="py-4 text-right text-gray-700">${item.unitPrice.toFixed(2)}</td>
-                        <td className="py-4 text-right font-medium text-gray-900">${item.totalPrice.toFixed(2)}</td>
+                        <td className="py-4 text-right text-gray-700">Rs. {item.unitPrice.toFixed(2)}</td>
+                        <td className="py-4 text-right font-medium text-gray-900">Rs. {item.totalPrice.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -282,15 +282,15 @@ export default function BillPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-700">Subtotal:</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-700">Service Charge ({serviceChargeRate}%):</span>
-                    <span className="font-medium">${serviceCharge.toFixed(2)}</span>
+                    <span className="font-medium">Rs. {serviceCharge.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t border-gray-300">
                     <span>Total:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Rs. {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

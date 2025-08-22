@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { clearOrder, completeOrder } from '@/redux/slices/orderSlice';
 import { showSuccessAlert, showErrorAlert } from '@/lib/sweetalert';
@@ -11,6 +10,7 @@ import CategoryTabs from '@/components/waiter/CategoryTabs';
 import FoodItemCard from '@/components/waiter/FoodItemCard';
 import OrderCart from '@/components/waiter/OrderCart';
 import OrdersList from '@/components/waiter/OrdersList';
+import CustomerDetailsModal from '@/components/waiter/CustomerDetailsModal';
 
 interface AdminUser {
   id: string;
@@ -54,14 +54,26 @@ interface CategorizedItems {
   [categoryName: string]: CategoryData;
 }
 
+interface CustomerData {
+  name: string;
+  email: string;
+  phone: string;
+  isNewCustomer: boolean;
+  customerId?: string;
+}
+
+interface PaymentData {
+  receivedAmount: number;
+  balance: number;
+  paymentMode: 'CASH' | 'CARD';
+}
+
 export default function WaiterOrdersPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const orderState = useAppSelector((state) => state.order);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getThemeClasses } = useTheme();
-  const themeClasses = getThemeClasses();
   
   // Waiter functionality state
   const [categorizedItems, setCategorizedItems] = useState<CategorizedItems>({});
@@ -70,6 +82,9 @@ export default function WaiterOrdersPage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [activeTab, setActiveTab] = useState<'place-order' | 'my-orders'>('place-order');
+  
+  // Customer details modal state
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   useEffect(() => {
     // Check if admin is logged in
@@ -119,7 +134,14 @@ export default function WaiterOrdersPage() {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrderClick = () => {
+    if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
+      return;
+    }
+    setShowCustomerModal(true);
+  };
+
+  const handleCustomerModalConfirm = async (customerData: CustomerData, paymentData: PaymentData) => {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
       return;
     }
@@ -135,7 +157,9 @@ export default function WaiterOrdersPage() {
           quantity: item.quantity,
           specialRequests: item.specialRequests
         })),
-        notes: orderState.notes
+        notes: orderState.notes,
+        customerData,
+        paymentData
       };
 
       const response = await fetch('/api/waiter/orders', {
@@ -154,14 +178,21 @@ export default function WaiterOrdersPage() {
       const newOrder = await response.json();
       
       // Show success message and clear order
-      showSuccessAlert(`Order placed successfully for Table ${orderState.tableNumber}! Order #${newOrder.id}`);
+      const paymentModeText = paymentData.paymentMode === 'CASH' ? 'Cash' : 'Card';
+      const balanceText = paymentData.balance > 0 ? ` (Balance: Rs. ${paymentData.balance.toFixed(2)})` : '';
+      showSuccessAlert(`Order placed successfully for Table ${orderState.tableNumber}! Order #${newOrder.id}. Payment: ${paymentModeText}${balanceText}`);
       dispatch(clearOrder());
+      setShowCustomerModal(false);
       
     } catch (error: any) {
       showErrorAlert(`Failed to place order: ${error.message}`);
     } finally {
       setIsPlacingOrder(false);
     }
+  };
+
+  const handleCustomerModalClose = () => {
+    setShowCustomerModal(false);
   };
 
   if (isLoading) {
@@ -262,11 +293,11 @@ export default function WaiterOrdersPage() {
           {orderState.tableNumber && orderState.items.length > 0 && (
             <div className="p-4 border-t border-gray-200">
               <button
-                onClick={handlePlaceOrder}
+                onClick={handlePlaceOrderClick}
                 disabled={isPlacingOrder}
                 className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {isPlacingOrder ? 'Placing Order...' : `Place Order - $${orderState.totalAmount.toFixed(2)}`}
+                {isPlacingOrder ? 'Placing Order...' : `Place Order - Rs. ${orderState.totalAmount.toFixed(2)}`}
               </button>
             </div>
           )}
@@ -308,6 +339,15 @@ export default function WaiterOrdersPage() {
         {activeTab === 'place-order' && <PlaceOrderContent />}
         {activeTab === 'my-orders' && adminUser && <OrdersList staffId={adminUser.id} />}
       </div>
+
+      {/* Customer Details Modal */}
+      <CustomerDetailsModal
+        isOpen={showCustomerModal}
+        onClose={handleCustomerModalClose}
+        onConfirm={handleCustomerModalConfirm}
+        totalAmount={orderState.totalAmount}
+        isProcessing={isPlacingOrder}
+      />
     </div>
   );
 } 

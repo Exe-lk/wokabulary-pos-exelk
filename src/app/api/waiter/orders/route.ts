@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // POST /api/waiter/orders - Create a new order
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tableNumber, staffId, items, notes } = body;
+    const { tableNumber, staffId, items, notes, customerData, paymentData } = body;
 
     if (!tableNumber || !staffId || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -24,6 +22,21 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Handle customer creation outside transaction first if needed
+    let customerId = null;
+    if (customerData && customerData.isNewCustomer) {
+      const newCustomer = await prisma.customer.create({
+        data: {
+          name: customerData.name,
+          email: customerData.email || null,
+          phone: customerData.phone,
+        },
+      });
+      customerId = newCustomer.id;
+    } else if (customerData) {
+      customerId = customerData.customerId;
     }
 
     // Calculate total amount and create order with items in a transaction
@@ -66,9 +79,13 @@ export async function POST(request: NextRequest) {
         data: {
           tableNumber,
           staffId,
+          customerId,
           totalAmount,
           notes: notes || null,
           status: 'PENDING',
+          customerName: customerData?.name || null,
+          customerEmail: customerData?.email || null,
+          customerPhone: customerData?.phone || null,
         },
       });
 
@@ -80,73 +97,40 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      // Return the complete order with relations
-      return await tx.order.findUnique({
-        where: { id: newOrder.id },
-        include: {
-          staff: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          orderItems: {
-            include: {
-              foodItem: {
-                select: {
-                  id: true,
-                  name: true,
-                  imageUrl: true,
-                },
-              },
-              portion: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      });
+      return newOrder;
     });
 
-    return NextResponse.json(order, { status: 201 });
-  } catch (error) {
-    console.error('Error creating order:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create order' },
-      { status: 500 }
-    );
-  }
-}
-
-// GET /api/waiter/orders - Get orders for a specific staff member
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const staffId = searchParams.get('staffId');
-    const status = searchParams.get('status');
-
-    let whereClause: any = {};
-    
-    if (staffId) {
-      whereClause.staffId = staffId;
-    }
-    
-    if (status) {
-      whereClause.status = status;
+    // Create payment record if payment data is provided
+    if (paymentData && customerId) {
+      await prisma.payment.create({
+        data: {
+          orderId: order.id,
+          customerId: customerId,
+          amount: order.totalAmount,
+          receivedAmount: paymentData.receivedAmount,
+          balance: paymentData.balance,
+          paymentMode: paymentData.paymentMode,
+        },
+      });
     }
 
-    const orders = await prisma.order.findMany({
-      where: whereClause,
+    // Return the complete order with relations
+    const completeOrder = await prisma.order.findUnique({
+      where: { id: order.id },
       include: {
         staff: {
           select: {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
           },
         },
         orderItems: {
@@ -166,6 +150,94 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            receivedAmount: true,
+            balance: true,
+            paymentDate: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(completeOrder, { status: 201 });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('DATABASE_URL')) {
+      return NextResponse.json({ 
+        error: 'Database connection not configured. Please check your DATABASE_URL environment variable.' 
+      }, { status: 500 });
+    }
+    
+    // Check if it's a Prisma client error
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json({ 
+        error: 'Database client error. Please ensure the database is running and accessible.' 
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create order' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/waiter/orders - Get orders for a staff member
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const staffId = searchParams.get('staffId');
+    const status = searchParams.get('status');
+
+    if (!staffId) {
+      return NextResponse.json(
+        { error: 'Staff ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const whereClause: any = { staffId };
+    if (status) {
+      whereClause.status = status;
+    }
+
+    const orders = await prisma.order.findMany({
+      where: whereClause,
+      include: {
+        orderItems: {
+          include: {
+            foodItem: true,
+            portion: true,
+          },
+        },
+        staff: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            paymentMode: true,
+            receivedAmount: true,
+            balance: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -175,6 +247,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
+    
+    // Check if it's a database connection error
+    if (error instanceof Error && error.message.includes('DATABASE_URL')) {
+      return NextResponse.json({ 
+        error: 'Database connection not configured. Please check your DATABASE_URL environment variable.' 
+      }, { status: 500 });
+    }
+    
+    // Check if it's a Prisma client error
+    if (error instanceof Error && error.message.includes('prisma')) {
+      return NextResponse.json({ 
+        error: 'Database client error. Please ensure the database is running and accessible.' 
+      }, { status: 500 });
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }

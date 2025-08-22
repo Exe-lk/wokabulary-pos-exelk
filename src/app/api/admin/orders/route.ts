@@ -59,6 +59,14 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',

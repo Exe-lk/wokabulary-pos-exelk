@@ -36,6 +36,12 @@ interface Order {
     email: string;
   };
   orderItems: OrderItem[];
+  customer?: {
+    id: string;
+    name: string;
+    phone: string;
+    email?: string;
+  };
 }
 
 interface OrdersListProps {
@@ -65,22 +71,16 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   });
 
   const fetchOrders = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const params = new URLSearchParams({ staffId });
-      if (statusFilter) {
-        params.append('status', statusFilter);
-      }
-      
-      const response = await fetch(`/api/waiter/orders?${params}`);
+      const response = await fetch(`/api/waiter/orders?staffId=${staffId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
-      
       const data = await response.json();
       setOrders(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: any) {
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -374,31 +374,36 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                 className="p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => handleViewDetails(order)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-900">
+                    Order #{order.id}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                    {getStatusText(order.status)}
+                  </span>
+                </div>
+                
+                <div className="text-sm text-gray-600 mb-2">
                   <div className="flex items-center space-x-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">
-                        Table {order.tableNumber}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Order #{order.id}
-                      </p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {getStatusText(order.status)}
-                    </span>
+                    <span>Table {order.tableNumber}</span>
+                    <span>•</span>
+                    <span>{formatTime(order.createdAt)}</span>
+                    {order.customer && (
+                      <>
+                        <span>•</span>
+                        <span>{order.customer.name}</span>
+                      </>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">
-                      ${order.totalAmount.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(order.createdAt)} at {formatTime(order.createdAt)}
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      Click to view details
-                    </p>
-                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold text-gray-900">
+                    Rs. {order.totalAmount.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-blue-600">
+                    Click to view details
+                  </span>
                 </div>
                 {order.notes && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -439,10 +444,10 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-gray-900">
-                          ${item.totalPrice.toFixed(2)}
+                          Rs. {item.totalPrice.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-600">
-                          ${item.unitPrice.toFixed(2)} each
+                                                      Rs. {item.unitPrice.toFixed(2)} each
                         </p>
                       </div>
                     </div>

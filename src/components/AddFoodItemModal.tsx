@@ -264,7 +264,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Add New Food Item</h2>
@@ -291,7 +291,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., Margherita Pizza"
             />
           </div>
@@ -307,7 +307,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Describe the food item..."
             />
           </div>
@@ -323,7 +323,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               value={formData.categoryId}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -343,7 +343,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               <button
                 type="button"
                 onClick={addPortionPrice}
-                className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-md hover:bg-purple-200 transition-colors"
+                className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
               >
                 + Add Portion
               </button>
@@ -357,7 +357,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                       value={portionPrice.portionId}
                       onChange={(e) => handlePortionPriceChange(index, 'portionId', e.target.value)}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select portion</option>
                       {getAvailablePortions(index).map((portion) => (
@@ -376,8 +376,8 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                       required
                       min="0"
                       step="0.01"
-                      placeholder="Price ($)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Price (Rs.)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   
@@ -407,7 +407,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               id="image"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               Maximum file size: 5MB. Supported formats: JPG, PNG, WebP
@@ -442,7 +442,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
             <button
               type="submit"
               disabled={isLoading || isUploadingImage}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-md hover:from-blue-700 hover:to-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading || isUploadingImage ? (
                 <div className="flex items-center justify-center">

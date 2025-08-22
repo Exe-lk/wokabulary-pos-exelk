@@ -6,7 +6,7 @@ export const showSuccessAlert = (title: string, message?: string) => {
     icon: 'success',
     title,
     text: message,
-    confirmButtonColor: '#10B981', // Green color
+    confirmButtonColor: '#06B6D4',// Green color
     confirmButtonText: 'OK',
     timer: 3000,
     timerProgressBar: true,

@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { customerName, customerEmail, customerPhone } = await request.json();
+    const { customerName, customerEmail, customerPhone, billNumber } = await request.json();
     const { id } = await params;
     const orderId = parseInt(id);
 
@@ -101,6 +101,7 @@ export async function POST(
             <div class="bill-summary">
               <h3>Order Summary</h3>
               <p><strong>Order #:</strong> ${orderId}</p>
+              ${billNumber ? `<p><strong>Bill #:</strong> ${billNumber}</p>` : ''}
               <p><strong>Table:</strong> ${updatedOrder.tableNumber}</p>
               <p><strong>Total Amount:</strong> $${updatedOrder.totalAmount.toFixed(2)}</p>
               <p><strong>Served by:</strong> ${updatedOrder.staff.name}</p>
@@ -124,7 +125,7 @@ export async function POST(
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: customerEmail,
-      subject: `Your Bill - Order #${orderId}`,
+      subject: `Your Bill - Order #${orderId}${billNumber ? ` (Bill #${billNumber})` : ''}`,
       html: emailHtml,
     });
 
@@ -135,7 +136,7 @@ export async function POST(
 
         const smsMessage = `Dear ${customerName || 'Valued Customer'},
 
-Your bill for Order #${orderId} is ready!
+Your bill for Order #${orderId}${billNumber ? ` (Bill #${billNumber})` : ''} is ready!
 
 Total Amount: $${updatedOrder.totalAmount.toFixed(2)}
 Table: ${updatedOrder.tableNumber}

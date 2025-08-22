@@ -85,12 +85,12 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
             <div className="text-sm">
               {item.foodItemPortions.length === 1 ? (
                 <span className="font-medium text-green-600">
-                  ${item.foodItemPortions[0].price.toFixed(2)}
+                  Rs. {item.foodItemPortions[0].price.toFixed(2)}
                 </span>
               ) : (
                 <span className="font-medium text-green-600">
-                  ${Math.min(...item.foodItemPortions.map(p => p.price)).toFixed(2)} - 
-                  ${Math.max(...item.foodItemPortions.map(p => p.price)).toFixed(2)}
+                  Rs. {Math.min(...item.foodItemPortions.map(p => p.price)).toFixed(2)} - 
+                  Rs. {Math.max(...item.foodItemPortions.map(p => p.price)).toFixed(2)}
                 </span>
               )}
             </div>
@@ -113,7 +113,7 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -164,7 +164,7 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
                         </div>
                       </div>
                       <div className="text-sm font-medium text-green-600">
-                        ${portion.price.toFixed(2)}
+                        Rs. {portion.price.toFixed(2)}
                       </div>
                     </label>
                   ))}
@@ -220,7 +220,7 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
                   disabled={!selectedPortion}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  Add to Order (${selectedPortion ? (selectedPortion.price * quantity).toFixed(2) : '0.00'})
+                  Add to Order (Rs. {selectedPortion ? (selectedPortion.price * quantity).toFixed(2) : '0.00'})
                 </button>
               </div>
             </div>
