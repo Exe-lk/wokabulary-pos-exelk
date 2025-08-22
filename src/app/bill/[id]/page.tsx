@@ -106,7 +106,7 @@ export default function BillPage() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     });
   };
@@ -142,133 +142,120 @@ export default function BillPage() {
   }
 
   const subtotal = order.totalAmount;
-  const serviceCharge = subtotal * (serviceChargeRate / 100); // Convert percentage to decimal
+  const serviceCharge = subtotal * (serviceChargeRate / 100);
   const total = subtotal + serviceCharge;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50 py-4">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        {/* Compact Header */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden" id="bill-content">
-          {/* Restaurant Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-8">
+          {/* Restaurant Header - Compact */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="bg-white p-2 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white p-1.5 rounded-lg">
                   <Image
                     src="/images/logo.png"
                     alt="Restaurant Logo"
-                    width={60}
-                    height={60}
+                    width={40}
+                    height={40}
                     className="object-contain"
                   />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">Delicious Dining</h1>
-                  <p className="text-blue-100">Fine Dining Experience</p>
+                  <h1 className="text-xl font-bold">Delicious Dining</h1>
+                  <p className="text-blue-100 text-sm">Fine Dining Experience</p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right text-sm">
                 <p className="text-blue-100 flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  123 Restaurant Street, Food City
+                  <MapPin className="w-3 h-3 mr-1" />
+                  123 Restaurant Street
                 </p>
-                <p className="text-blue-100 flex items-center mt-1">
-                  <Phone className="w-4 h-4 mr-1" />
+                <p className="text-blue-100 flex items-center mt-0.5">
+                  <Phone className="w-3 h-3 mr-1" />
                   +1 (555) 123-4567
-                </p>
-                <p className="text-blue-100 flex items-center mt-1">
-                  <Mail className="w-4 h-4 mr-1" />
-                  info@deliciousdining.com
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Bill Details */}
-          <div className="p-8">
-            <div className="flex justify-between items-start mb-8">
+          {/* Bill Content - Compact */}
+          <div className="p-4">
+            {/* Bill Info Row */}
+            <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">BILL</h2>
-                <div className="space-y-2">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">BILL #{order.id}</h2>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <p className="flex items-center text-gray-700">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Bill #:</span>
-                    <span className="ml-2">{order.id}</span>
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Table {order.tableNumber}
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Table:</span>
-                    <span className="ml-2">{order.tableNumber}</span>
+                    <Clock className="w-3 h-3 mr-1" />
+                    {formatDate(order.createdAt)}
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Date:</span>
-                    <span className="ml-2">{formatDate(order.createdAt)} at {formatTime(order.createdAt)}</span>
+                    <User className="w-3 h-3 mr-1" />
+                    {order.staff.name}
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <User className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Served by:</span>
-                    <span className="ml-2">{order.staff.name}</span>
+                    <Clock className="w-3 h-3 mr-1" />
+                    {formatTime(order.createdAt)}
                   </p>
                 </div>
               </div>
 
-              {/* Customer Information */}
+              {/* Customer Information - Compact */}
               {(order.customerName || order.customerEmail || order.customerPhone) && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-2">Customer Information</h3>
+                <div className="bg-gray-50 p-3 rounded-lg text-sm">
+                  <h3 className="font-semibold text-gray-900 mb-1">Customer</h3>
                   {order.customerName && (
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-medium">Name:</span> {order.customerName}
-                    </p>
+                    <p className="text-gray-700">Name: {order.customerName}</p>
                   )}
                   {order.customerEmail && (
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-medium">Email:</span> {order.customerEmail}
-                    </p>
+                    <p className="text-gray-700">Email: {order.customerEmail}</p>
                   )}
                   {order.customerPhone && (
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-medium">Phone:</span> {order.customerPhone}
-                    </p>
+                    <p className="text-gray-700">Phone: {order.customerPhone}</p>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Order Items */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Details</h3>
+            {/* Order Items - Compact Table */}
+            <div className="border-t border-gray-200 pt-3">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Order Details</h3>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 text-gray-600 font-medium">Item</th>
-                      <th className="text-center py-3 text-gray-600 font-medium">Portion</th>
-                      <th className="text-center py-3 text-gray-600 font-medium">Qty</th>
-                      <th className="text-right py-3 text-gray-600 font-medium">Unit Price</th>
-                      <th className="text-right py-3 text-gray-600 font-medium">Total</th>
+                      <th className="text-left py-2 text-gray-600 font-medium">Item</th>
+                      <th className="text-center py-2 text-gray-600 font-medium">Portion</th>
+                      <th className="text-center py-2 text-gray-600 font-medium">Qty</th>
+                      <th className="text-right py-2 text-gray-600 font-medium">Price</th>
+                      <th className="text-right py-2 text-gray-600 font-medium">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {order.orderItems.map((item) => (
                       <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-4">
+                        <td className="py-2">
                           <div>
-                            <p className="font-medium text-gray-900">{item.foodItem.name}</p>
+                            <p className="font-medium text-gray-900 text-sm">{item.foodItem.name}</p>
                             {item.foodItem.description && (
-                              <p className="text-sm text-gray-600">{item.foodItem.description}</p>
+                              <p className="text-xs text-gray-600">{item.foodItem.description}</p>
                             )}
                             {item.specialRequests && (
-                              <p className="text-sm text-blue-600 italic">Special: {item.specialRequests}</p>
+                              <p className="text-xs text-blue-600 italic">Special: {item.specialRequests}</p>
                             )}
                           </div>
                         </td>
-                        <td className="py-4 text-center text-gray-700">{item.portion.name}</td>
-                        <td className="py-4 text-center text-gray-700">{item.quantity}</td>
-                        <td className="py-4 text-right text-gray-700">Rs. {item.unitPrice.toFixed(2)}</td>
-                        <td className="py-4 text-right font-medium text-gray-900">Rs. {item.totalPrice.toFixed(2)}</td>
+                        <td className="py-2 text-center text-gray-700 text-sm">{item.portion.name}</td>
+                        <td className="py-2 text-center text-gray-700 text-sm">{item.quantity}</td>
+                        <td className="py-2 text-right text-gray-700 text-sm">Rs. {item.unitPrice.toFixed(2)}</td>
+                        <td className="py-2 text-right font-medium text-gray-900 text-sm">Rs. {item.totalPrice.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -276,19 +263,21 @@ export default function BillPage() {
               </div>
             </div>
 
-            {/* Bill Summary */}
-            <div className="border-t border-gray-300 pt-6 mt-6">
-              <div className="max-w-md ml-auto">
-                <div className="space-y-3">
+            {/* Bill Summary - Compact */}
+            <div className="border-t border-gray-300 pt-3 mt-3">
+              <div className="max-w-xs ml-auto">
+                <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-700">Subtotal:</span>
                     <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700">Service Charge ({serviceChargeRate}%):</span>
-                    <span className="font-medium">Rs. {serviceCharge.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t border-gray-300">
+                  {serviceChargeRate > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-700">Service ({serviceChargeRate}%):</span>
+                      <span className="font-medium">Rs. {serviceCharge.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-300">
                     <span>Total:</span>
                     <span>Rs. {total.toFixed(2)}</span>
                   </div>
@@ -296,29 +285,29 @@ export default function BillPage() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="border-t border-gray-200 pt-6 mt-8 text-center">
-              <p className="text-gray-600 mb-2">Thank you for dining with us!</p>
-              <p className="text-sm text-gray-500">We hope to see you again soon.</p>
+            {/* Footer - Compact */}
+            <div className="border-t border-gray-200 pt-3 mt-4 text-center">
+              <p className="text-gray-600 text-sm mb-1">Thank you for dining with us!</p>
+              <p className="text-xs text-gray-500">We hope to see you again soon.</p>
             </div>
           </div>
         </div>
 
-        {/* Download Button */}
-        <div className="mt-6 text-center">
+        {/* Download Button - Compact */}
+        <div className="mt-4 text-center">
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center mx-auto"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center mx-auto text-sm"
           >
             {isDownloading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
                 Generating PDF...
               </>
             ) : (
               <>
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-3 h-3 mr-2" />
                 Download PDF
               </>
             )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AddFoodItemModal from "@/components/AddFoodItemModal";
+import EditFoodItemModal from "@/components/EditFoodItemModal";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 interface FoodItemPortion {
@@ -39,6 +40,8 @@ export default function ManageItems() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null);
 
   const fetchFoodItems = async () => {
     try {
@@ -98,9 +101,21 @@ export default function ManageItems() {
     fetchFoodItems();
   };
 
+  const handleFoodItemUpdated = () => {
+    fetchFoodItems();
+  };
+
   const handleEditItem = (itemId: string) => {
-    // TODO: Implement edit item functionality
-    console.log("Edit item:", itemId);
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      setSelectedItem(item);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedItem(null);
   };
 
   const handleToggleAvailability = async (itemId: string) => {
@@ -262,12 +277,12 @@ export default function ManageItems() {
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-2">
-                      {/* <button
+                      <button
                         onClick={() => handleEditItem(item.id)}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Edit
-                      </button> */}
+                      </button>
                       <button
                         onClick={() => handleToggleAvailability(item.id)}
                         className={`flex items-center gap-1 text-sm font-medium ${item.isActive
@@ -352,6 +367,13 @@ export default function ManageItems() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onFoodItemAdded={handleFoodItemAdded}
+      />
+
+      <EditFoodItemModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        foodItem={selectedItem}
+        onFoodItemUpdated={handleFoodItemUpdated}
       />
     </div>
   );

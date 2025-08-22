@@ -281,8 +281,8 @@ export async function GET(
                     </td>
                     <td class="text-center">${item.portion.name}</td>
                     <td class="text-center">${item.quantity}</td>
-                    <td class="text-right">$${item.unitPrice.toFixed(2)}</td>
-                    <td class="text-right">$${item.totalPrice.toFixed(2)}</td>
+                    <td class="text-right">Rs. ${item.unitPrice.toFixed(2)}</td>
+                    <td class="text-right">Rs. ${item.totalPrice.toFixed(2)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -293,15 +293,15 @@ export async function GET(
             <table class="summary-table">
               <tr>
                 <td>Subtotal:</td>
-                <td class="text-right">$${subtotal.toFixed(2)}</td>
+                <td class="text-right">Rs. ${subtotal.toFixed(2)}</td>
               </tr>
               <tr>
                 <td>Service Charge (${serviceChargeRate}%):</td>
-                <td class="text-right">$${serviceCharge.toFixed(2)}</td>
+                <td class="text-right">Rs. ${serviceCharge.toFixed(2)}</td>
               </tr>
               <tr class="total-row">
                 <td>Total:</td>
-                <td class="text-right">$${total.toFixed(2)}</td>
+                <td class="text-right">Rs. ${total.toFixed(2)}</td>
               </tr>
             </table>
           </div>

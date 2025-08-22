@@ -102,7 +102,7 @@ export async function POST(
               <p><strong>Order #:</strong> ${orderId}</p>
               ${billNumber ? `<p><strong>Bill #:</strong> ${billNumber}</p>` : ''}
               <p><strong>Table:</strong> ${updatedOrder.tableNumber}</p>
-              <p><strong>Total Amount:</strong> $${updatedOrder.totalAmount.toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> Rs. ${updatedOrder.totalAmount.toFixed(2)}</p>
               <p><strong>Served by:</strong> ${updatedOrder.staff.name}</p>
             </div>
             
@@ -137,7 +137,7 @@ export async function POST(
 
 Your bill for Order #${orderId}${billNumber ? ` (Bill #${billNumber})` : ''} is ready!
 
-Total Amount: $${updatedOrder.totalAmount.toFixed(2)}
+Total Amount: Rs. ${updatedOrder.totalAmount.toFixed(2)}
 Table: ${updatedOrder.tableNumber}
 
 View your bill: ${billUrl}
