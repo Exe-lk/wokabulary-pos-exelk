@@ -65,7 +65,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const refreshSettings = async () => {
     try {
-      const response = await fetch('/api/admin/settings');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/settings');
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
@@ -75,9 +75,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
+  
   const updateServiceChargeRate = async (rate: number) => {
     try {
-      const response = await fetch('/api/admin/settings', {
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

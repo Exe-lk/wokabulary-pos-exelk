@@ -45,7 +45,7 @@ export default function ManageItems() {
 
   const fetchFoodItems = async () => {
     try {
-      const response = await fetch('/api/admin/food-items');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/food-items');
       if (!response.ok) {
         throw new Error('Failed to fetch food items');
       }
@@ -123,7 +123,7 @@ export default function ManageItems() {
       const item = items.find(i => i.id === itemId);
       if (!item) return;
 
-      const response = await fetch(`/api/admin/food-items`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/food-items`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
