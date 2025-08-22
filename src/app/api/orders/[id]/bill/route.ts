@@ -145,7 +145,7 @@ View your bill: ${billUrl}
 Thank you for dining with us!
 
 Best Regards,
-Restaurant Team`;
+Wokabulary Team`;
 
         // Format phone number for Text.lk (should start with 94 for Sri Lanka)
         let formattedPhone = customerPhone;
