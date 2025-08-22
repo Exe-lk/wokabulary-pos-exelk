@@ -26,12 +26,40 @@ NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 
-# Email Configuration (if using nodemailer)
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT="587"
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
+# Email Configuration (for nodemailer)
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
+
+# Text.lk SMS Configuration
+# Get your API token from: https://text.lk/
+TEXTLK_API_TOKEN="your_textlk_api_token_here"
+TEXTLK_SENDER_ID="YourRestaurant"
+
+# Base URL for bill links
+BASE_URL="http://localhost:3000"
 ```
+
+## SMS Setup with Text.lk
+
+This application uses [Text.lk](https://text.lk/) for sending SMS notifications to customers when bills are sent. To set up SMS functionality:
+
+1. **Get Text.lk API Token**:
+   - Visit [Text.lk](https://text.lk/)
+   - Sign up for an account
+   - Get your API token from the dashboard
+
+2. **Configure Environment Variables**:
+   - Add your `TEXTLK_API_TOKEN` to `.env.local`
+   - Set your `TEXTLK_SENDER_ID` (this will appear as the sender name in SMS)
+
+3. **Phone Number Format**:
+   - The system automatically formats phone numbers for Sri Lanka
+   - Supported formats: `0712345678`, `+94712345678`, `94712345678`
+
+4. **SMS Features**:
+   - SMS is sent automatically when a phone number is provided
+   - Includes order details, bill number, and bill link
+   - Works alongside email notifications
 
 ## Getting Started
 
@@ -87,6 +115,8 @@ The application uses the following main models:
 - **Manager Dashboard**: Overview of restaurant operations
 - **Customer Management**: Track customer information and order history
 - **Payment Processing**: Multiple payment modes with receipt generation
+- **SMS Notifications**: Send bill notifications via Text.lk SMS gateway
+- **Email Notifications**: Send detailed bill emails with download links
 
 ## Learn More
 
@@ -95,6 +125,7 @@ To learn more about the technologies used:
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
+- [Text.lk SMS API](https://text.lk/)
 
 ## Deployment
 

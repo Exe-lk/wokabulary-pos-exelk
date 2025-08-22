@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import nodemailer from 'nodemailer';
-import axios from 'axios';
 
 const prisma = new PrismaClient();
 
@@ -122,6 +121,7 @@ export async function POST(
       </html>
     `;
 
+    // Send email
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: customerEmail,
@@ -129,11 +129,10 @@ export async function POST(
       html: emailHtml,
     });
 
+    // Send SMS if phone number is provided
+    let smsResult = null;
     if (customerPhone) {
       try {
-        const apiUrl = process.env.SMS_API_URL;
-        const apiKey = process.env.SMS_API_KEY;
-
         const smsMessage = `Dear ${customerName || 'Valued Customer'},
 
 Your bill for Order #${orderId}${billNumber ? ` (Bill #${billNumber})` : ''} is ready!
@@ -148,30 +147,28 @@ Thank you for dining with us!
 Best Regards,
 Restaurant Team`;
 
-        const requestBody = {
-          to: customerPhone.startsWith('+') ? customerPhone : `+94${customerPhone.substring(1)}`,
+        // Format phone number for Text.lk (should start with 94 for Sri Lanka)
+        let formattedPhone = customerPhone;
+        if (customerPhone.startsWith('+')) {
+          formattedPhone = customerPhone.substring(1);
+        } else if (customerPhone.startsWith('0')) {
+          formattedPhone = '94' + customerPhone.substring(1);
+        } else if (!customerPhone.startsWith('94')) {
+          formattedPhone = '94' + customerPhone;
+        }
+
+        // Import sendSMS from textlk-node for server-side use
+        const { sendSMS } = await import('textlk-node');
+        
+        smsResult = await sendSMS({
+          phoneNumber: formattedPhone,
           message: smsMessage,
-        };
-
-        console.log("Sending SMS to:", customerPhone);
-        console.log("SMS Request Body:", requestBody);
-        console.log("API URL:", apiUrl);
-        console.log("API Key:", apiKey);
-
-         const response = await axios.post(`http://${apiUrl}`, requestBody, {
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            Authorization: apiKey,
-          },
         });
-        console.log("SMS Response:", response);
-        console.log("SMS Response:", response.data);
 
-
-        console.log("SMS sent successfully");
-      } catch (smsError) {
+        console.log('SMS Result:', smsResult);
+      } catch (smsError: any) {
         console.error('SMS sending failed:', smsError);
+        smsResult = { success: false, error: smsError.message };
       }
     }
 
@@ -185,6 +182,7 @@ Restaurant Team`;
     return NextResponse.json({
       message: 'Bill sent successfully via email' + (customerPhone ? ' and SMS' : ''),
       billUrl,
+      smsResult,
     });
   } catch (error) {
     console.error('Error sending bill:', error);

@@ -25,15 +25,21 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
 
 # Email Configuration (if using nodemailer)
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT="587"
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
+
+# Text.lk SMS Configuration
+TEXTLK_API_TOKEN="your_textlk_api_token_here"
+TEXTLK_SENDER_ID="YourRestaurant"
+
+# Base URL for bill links
+BASE_URL="http://localhost:3000"
 `;
 
   fs.writeFileSync(envPath, envContent);
   console.log('✅ .env.local file created successfully!');
-  console.log('⚠️  Please update the DATABASE_URL with your actual database credentials.\n');
+  console.log('⚠️  Please update the DATABASE_URL with your actual database credentials.');
+  console.log('⚠️  Please update the TEXTLK_API_TOKEN with your Text.lk API token.\n');
 } else {
   console.log('✅ .env.local file already exists.\n');
 }

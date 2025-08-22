@@ -1,7 +1,177 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { X, Mail, User, Phone, Send } from 'lucide-react';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { X, Mail, User, Phone, Send, MessageSquare } from 'lucide-react';
 import { showSuccessAlert } from '@/lib/sweetalert';
 
 interface BillModalProps {
@@ -41,6 +211,7 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const [billNumber, setBillNumber] = useState('');
+  const [smsStatus, setSmsStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   // Generate bill number when modal opens
   useEffect(() => {
@@ -65,8 +236,9 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
         setCustomerPhone('');
       }
       
-      // Clear any previous errors
+      // Clear any previous errors and status
       setError('');
+      setSmsStatus('idle');
     }
   }, [isOpen, order.customer]);
 
@@ -80,6 +252,7 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
 
     setIsSending(true);
     setError('');
+    setSmsStatus('idle');
 
     try {
       const response = await fetch(`/api/orders/${order.id}/bill`, {
@@ -100,9 +273,27 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
         throw new Error(errorData.error || 'Failed to send bill');
       }
 
+      const result = await response.json();
+      
+      // Check SMS status
+      if (customerPhone && result.smsResult) {
+        if (result.smsResult.success) {
+          setSmsStatus('success');
+        } else {
+          setSmsStatus('error');
+          console.error('SMS failed:', result.smsResult.error);
+        }
+      }
+
       onBillSent();
       onClose();
-      showSuccessAlert(`Bill #${billNumber} sent successfully to ${customerEmail}!`);
+      
+      // Show success message
+      const successMessage = customerPhone 
+        ? `Bill #${billNumber} sent successfully!\n\n📧 Email sent to: ${customerEmail}\n📱 SMS sent to: ${customerPhone}`
+        : `Bill #${billNumber} sent successfully to ${customerEmail}!`;
+      
+      showSuccessAlert(successMessage);
       
       // Reset form
       setCustomerName('');
@@ -212,6 +403,7 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
             <div>
               <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number {order.customer ? '(Pre-filled)' : '(Optional)'}
+                <span className="text-blue-600 text-xs ml-1">📱 SMS will be sent if provided</span>
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -221,9 +413,14 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter phone number"
+                  placeholder="Enter phone number (e.g., 0712345678)"
                 />
               </div>
+              {customerPhone && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: 0712345678 or +94712345678 (SMS will be sent via Text.lk)
+                </p>
+              )}
             </div>
           </div>
 
@@ -250,6 +447,7 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
                 <>
                   <Send className="w-4 h-4 mr-2" />
                   Send Bill
+                  {customerPhone && <MessageSquare className="w-4 h-4 ml-1" />}
                 </>
               )}
             </button>
