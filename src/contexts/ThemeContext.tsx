@@ -75,6 +75,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
+  
   const updateServiceChargeRate = async (rate: number) => {
     try {
       const response = await fetch('https://wokabulary.netlify.app/api/admin/settings', {
