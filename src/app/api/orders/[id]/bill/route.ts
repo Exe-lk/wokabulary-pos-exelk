@@ -175,7 +175,7 @@ Wokabulary Team`;
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: 'SERVED',
+        status: 'COMPLETED',
       },
     });
 
