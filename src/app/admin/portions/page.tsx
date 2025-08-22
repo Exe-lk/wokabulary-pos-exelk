@@ -22,7 +22,7 @@ export default function PortionsPage() {
 
   const fetchPortions = async () => {
     try {
-      const response = await fetch('https://wokabulary.netlify.app/api/admin/portions');
+      const response = await fetch('/api/admin/portions');
       if (!response.ok) {
         throw new Error('Failed to fetch portions');
       }

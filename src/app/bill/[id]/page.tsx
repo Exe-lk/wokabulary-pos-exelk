@@ -48,7 +48,7 @@ export default function BillPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`https://wokabulary.netlify.app/api/bill/${orderId}`);
+        const response = await fetch(`/api/bill/${orderId}`);
         if (!response.ok) {
           throw new Error('Order not found');
         }
@@ -63,7 +63,7 @@ export default function BillPage() {
 
     const fetchSettings = async () => {
       try {
-        const response = await fetch('https://wokabulary.netlify.app/api/settings');
+        const response = await fetch('/api/settings');
         if (response.ok) {
           const settings = await response.json();
           setServiceChargeRate(settings.serviceChargeRate || 0);
@@ -82,7 +82,7 @@ export default function BillPage() {
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/bill/${orderId}/pdf`);
+      const response = await fetch(`/api/bill/${orderId}/pdf`);
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }

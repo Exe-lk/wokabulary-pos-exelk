@@ -79,7 +79,7 @@ export default function WaiterDashboard() {
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
-        const response = await fetch('https://wokabulary.netlify.app/api/waiter/food-items');
+        const response = await fetch('/api/waiter/food-items');
         if (!response.ok) {
           throw new Error('Failed to fetch food items');
         }
@@ -128,7 +128,7 @@ export default function WaiterDashboard() {
         notes: orderState.notes
       };
 
-      const response = await fetch('https://wokabulary.netlify.app/api/waiter/orders', {
+      const response = await fetch('/api/waiter/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
