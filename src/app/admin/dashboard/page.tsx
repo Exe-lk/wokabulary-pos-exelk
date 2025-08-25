@@ -37,10 +37,21 @@ export default function AdminDashboard() {
     }
   }, [router]);
 
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Admin Dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -86,7 +97,7 @@ export default function AdminDashboard() {
         <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <button 
-            onClick={() => router.push('/admin/users')}
+            // onClick={() => router.push('/admin/users')}
             className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300 transform hover:scale-105"
           >
             <div className="flex items-center space-x-4">
@@ -177,7 +188,7 @@ export default function AdminDashboard() {
           </button>
           
           <button 
-            onClick={() => router.push('/admin/reports')}
+            // onClick={() => router.push('/admin/reports')}
             className="p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300 transform hover:scale-105"
           >
             <div className="flex items-center space-x-4">

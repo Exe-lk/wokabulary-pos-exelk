@@ -165,10 +165,21 @@ export default function ManageItems() {
     return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
   };
 
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen">
+  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Food Items...</p>
+        </div>
       </div>
     );
   }
@@ -212,39 +223,42 @@ export default function ManageItems() {
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Item</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Category</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Portions & Prices</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Price Range</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
-              </tr>
+                     <table className="w-full table-fixed">
+             <thead className="bg-gray-50 border-b border-gray-200">
+               <tr>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/3">Item</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Category</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Portions & Prices</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Price Range</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Status</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Actions</th>
+               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredItems.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="py-4 px-4">
-                    <div className="flex items-center">
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-12 h-12 rounded-lg object-cover mr-3"
-                        />
-                      )}
-                      <div>
-                        <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        {item.description && (
-                          <p className="text-sm text-gray-500 mt-1 max-w-xs truncate">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
+                                     <td className="py-4 px-4">
+                     <div className="flex items-start">
+                       {item.imageUrl && (
+                         <img
+                           src={item.imageUrl}
+                           alt={item.name}
+                           className="w-12 h-12 rounded-lg object-cover mr-3 flex-shrink-0"
+                         />
+                       )}
+                       <div className="min-w-0 flex-1">
+                         <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
+                                                   {item.description && (
+                            <p 
+                              className="text-sm text-gray-500 mt-1 break-words line-clamp-2 cursor-help"
+                              title={item.description}
+                            >
+                              {item.description}
+                            </p>
+                          )}
+                       </div>
+                     </div>
+                   </td>
                   <td className="py-4 px-4">
                     <span className="text-sm text-gray-900">{item.category.name}</span>
                   </td>

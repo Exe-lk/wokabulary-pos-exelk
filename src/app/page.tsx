@@ -73,13 +73,13 @@ export default function Home() {
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="mb-6">
-            <div className="w-24 h-24 mx-auto mb-4 relative">
+            <div className="w-40 h-40 mx-auto mb-4 relative">
               <div className="w-full h-full bg-white rounded-2xl shadow-xl p-4 border border-blue-100">
                 <Image
                   src="/images/logo.png"
                   alt="Restaurant Logo"
-                  width={80}
-                  height={80}
+                  width={200}
+                  height={200}
                   className="rounded-xl object-cover"
                   priority
                 />
@@ -187,7 +187,7 @@ export default function Home() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-xs text-blue-600">
-            © 2025 Restaurant Management System by{" "}
+            © 2025 Wokabulary Restaurant Management System by{" "}
             <span className="font-semibold text-blue-800">EXE.LK</span>
           </p>
         </div>

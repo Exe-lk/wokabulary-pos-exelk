@@ -57,10 +57,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/50"></div>
+  //     </div>
+  //   );
+  // }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white/50"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Admin Dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -103,7 +114,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   {pathname === '/admin/categories' && 'Category Management'}
                   {pathname === '/admin/portions' && 'Portion Management'}
                   {pathname === '/admin/orders' && 'Order Management'}
-                  {pathname === '/admin/waiter-orders' && 'Waiter Orders Management'}
+                  {pathname === '/admin/waiter-orders' && 'Bill Management'}
                   {pathname === '/admin/reports' && 'Reports & Analytics'}
                   {pathname === '/admin/settings' && 'System Settings'}
                 </h1>

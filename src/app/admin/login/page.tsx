@@ -67,8 +67,8 @@ export default function AdminLogin() {
               <Image
                 src="/images/logo.png"
                 alt="Restaurant Logo"
-                width={80}
-                height={80}
+                width={150}
+                height={150}
                 className="rounded-2xl shadow-2xl"
                 priority
               />
@@ -193,7 +193,7 @@ export default function AdminLogin() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-sm text-white/60">
-            © 2025 Restaurant Management System by EXE.LK
+            ©  2025 Wokabulary Restaurant Management System by EXE.LK
           </p>
         </div>
       </div>

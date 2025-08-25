@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import { showSuccessAlert } from '@/lib/sweetalert';
 
 interface AddFoodItemModalProps {
@@ -34,13 +35,14 @@ interface Category {
   isActive: boolean;
 }
 
+interface FormValues {
+  name: string;
+  description: string;
+  categoryId: string;
+  portionPrices: PortionPrice[];
+}
+
 export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: AddFoodItemModalProps) {
-  const [formData, setFormData] = useState<FoodItemFormData>({
-    name: "",
-    description: "",
-    categoryId: "",
-  });
-  const [portionPrices, setPortionPrices] = useState<PortionPrice[]>([{ portionId: "", price: "" }]);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [portions, setPortions] = useState<Portion[]>([]);
@@ -83,28 +85,112 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Validation function
+  const validateForm = (values: FormValues) => {
+    const errors: any = {};
+
+    // Name validation
+    if (!values.name) {
+      errors.name = 'Food item name is required';
+    } else if (values.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters long';
+    } else if (values.name.trim().length > 50) {
+      errors.name = 'Name must be less than 50 characters';
+    }
+
+    // Description validation
+    if (values.description && values.description.length > 500) {
+      errors.description = 'Description must be less than 500 characters';
+    }
+
+    // Category validation
+    if (!values.categoryId) {
+      errors.categoryId = 'Please select a category';
+    }
+
+    // Portion prices validation
+    if (!values.portionPrices || values.portionPrices.length === 0) {
+      errors.portionPrices = 'At least one portion with price is required';
+    } else {
+      const validPortionPrices = values.portionPrices.filter(pp => pp.portionId && pp.price);
+      
+      if (validPortionPrices.length === 0) {
+        errors.portionPrices = 'At least one portion with price is required';
+      } else {
+        // Check for duplicate portions
+        const portionIds = validPortionPrices.map(pp => pp.portionId);
+        const uniquePortionIds = new Set(portionIds);
+        if (portionIds.length !== uniquePortionIds.size) {
+          errors.portionPrices = 'Duplicate portions are not allowed';
+        }
+
+        // Validate individual portion prices
+        const portionErrors: any[] = [];
+        validPortionPrices.forEach((pp, index) => {
+          const price = parseFloat(pp.price);
+          if (isNaN(price) || price <= 0) {
+            portionErrors[index] = 'Price must be a valid positive number';
+          } else {
+            // Check if price has more than 2 decimal places
+            const priceString = pp.price.toString();
+            const parts = priceString.split('.');
+            if (parts.length > 1 && parts[1].length > 2) {
+              portionErrors[index] = 'Price can only have up to 2 decimal places';
+            }
+          }
+        });
+
+        if (portionErrors.some(error => error)) {
+          errors.portionPrices = portionErrors;
+        }
+      }
+    }
+
+    return errors;
   };
 
-  const handlePortionPriceChange = (index: number, field: 'portionId' | 'price', value: string) => {
-    const newPortionPrices = [...portionPrices];
+  const handlePortionPriceChange = (
+    index: number, 
+    field: 'portionId' | 'price', 
+    value: string, 
+    setFieldValue: (field: string, value: any) => void,
+    values: FormValues
+  ) => {
+    const newPortionPrices = [...values.portionPrices];
+    
+    if (field === 'price') {
+      // Validate and format price to only allow two decimal places
+      const numericValue = value.replace(/[^0-9.]/g, '');
+      
+      // Check if there are more than one decimal points
+      const decimalCount = (numericValue.match(/\./g) || []).length;
+      if (decimalCount > 1) {
+        return; // Don't update if multiple decimal points
+      }
+      
+      // Check if there are more than 2 digits after decimal point
+      const parts = numericValue.split('.');
+      if (parts.length > 1 && parts[1].length > 2) {
+        return; // Don't update if more than 2 decimal places
+      }
+      
+      // Update with the validated value
+      newPortionPrices[index] = { ...newPortionPrices[index], [field]: numericValue };
+    } else {
     newPortionPrices[index] = { ...newPortionPrices[index], [field]: value };
-    setPortionPrices(newPortionPrices);
+    }
+    
+    setFieldValue('portionPrices', newPortionPrices);
   };
 
-  const addPortionPrice = () => {
-    setPortionPrices([...portionPrices, { portionId: "", price: "" }]);
+  const addPortionPrice = (setFieldValue: (field: string, value: any) => void, values: FormValues) => {
+    setFieldValue('portionPrices', [...values.portionPrices, { portionId: "", price: "" }]);
   };
 
-  const removePortionPrice = (index: number) => {
-    if (portionPrices.length > 1) {
-      const newPortionPrices = portionPrices.filter((_, i) => i !== index);
-      setPortionPrices(newPortionPrices);
+  const removePortionPrice = (index: number, setFieldValue: (field: string, value: any) => void, values: FormValues) => {
+    if (values.portionPrices.length > 1) {
+      const newPortionPrices = values.portionPrices.filter((_, i) => i !== index);
+      setFieldValue('portionPrices', newPortionPrices);
     }
   };
 
@@ -165,43 +251,19 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setError("");
 
     try {
-      // Validate required fields
-      if (!formData.name || !formData.categoryId) {
-        throw new Error('Name and category are required');
-      }
-
-      // Validate portion prices
-      const validPortionPrices = portionPrices.filter(pp => pp.portionId && pp.price);
-      if (validPortionPrices.length === 0) {
-        throw new Error('At least one portion with price is required');
-      }
-
-      // Check for duplicate portions
-      const portionIds = validPortionPrices.map(pp => pp.portionId);
-      const uniquePortionIds = new Set(portionIds);
-      if (portionIds.length !== uniquePortionIds.size) {
-        throw new Error('Duplicate portions are not allowed');
-      }
-
-      // Validate prices
-      for (const pp of validPortionPrices) {
-        const price = parseFloat(pp.price);
-        if (isNaN(price) || price <= 0) {
-          throw new Error('All prices must be valid positive numbers');
-        }
-      }
-
       // Upload image if selected
       let imageUrl: string | null = null;
       if (selectedImage) {
         imageUrl = await uploadImage();
       }
+
+      // Get valid portion prices
+      const validPortionPrices = values.portionPrices.filter(pp => pp.portionId && pp.price);
 
       // Create food item with portions
       const response = await fetch('/api/admin/food-items', {
@@ -210,7 +272,9 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
+          name: values.name,
+          description: values.description,
+          categoryId: values.categoryId,
           imageUrl,
           portions: validPortionPrices.map(pp => ({
             portionId: pp.portionId,
@@ -238,12 +302,6 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
   };
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      categoryId: "",
-    });
-    setPortionPrices([{ portionId: "", price: "" }]);
     setSelectedImage(null);
     setImagePreview(null);
     setError("");
@@ -254,11 +312,18 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
     onClose();
   };
 
-  const getAvailablePortions = (currentIndex: number) => {
-    const usedPortionIds = portionPrices
+  const getAvailablePortions = (currentIndex: number, values: FormValues) => {
+    const usedPortionIds = values.portionPrices
       .map((pp, index) => index !== currentIndex ? pp.portionId : null)
       .filter(Boolean);
     return portions.filter(portion => !usedPortionIds.includes(portion.id));
+  };
+
+  const initialValues: FormValues = {
+    name: "",
+    description: "",
+    categoryId: "",
+    portionPrices: [{ portionId: "", price: "" }]
   };
 
   if (!isOpen) return null;
@@ -278,22 +343,29 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <Formik
+          initialValues={initialValues}
+          validate={validateForm}
+          onSubmit={handleSubmit}
+          enableReinitialize
+        >
+          {({ values, errors, touched, setFieldValue, handleChange, handleBlur, isValid, dirty }) => (
+            <Form className="space-y-4">
           {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Food Item Name *
+                  Food Item Name <span className="text-red-500">*</span>
             </label>
-            <input
+                <Field
               type="text"
               id="name"
               name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.name && touched.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
               placeholder="e.g., Margherita Pizza"
             />
+                <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
           </div>
 
           {/* Description */}
@@ -301,29 +373,31 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
-            <textarea
+                <Field
+                  as="textarea"
               id="description"
               name="description"
-              value={formData.description}
-              onChange={handleInputChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.description && touched.description ? 'border-red-500' : 'border-gray-300'
+                  }`}
               placeholder="Describe the food item..."
             />
+                <ErrorMessage name="description" component="div" className="text-red-500 text-sm mt-1" />
           </div>
 
           {/* Category Selection */}
           <div>
             <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
-              Category *
+                  Category <span className="text-red-500">*</span>
             </label>
-            <select
+                <Field
+                  as="select"
               id="categoryId"
               name="categoryId"
-              value={formData.categoryId}
-              onChange={handleInputChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.categoryId && touched.categoryId ? 'border-red-500' : 'border-gray-300'
+                  }`}
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -331,18 +405,19 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                   {category.name} {category.description && `- ${category.description}`}
                 </option>
               ))}
-            </select>
+                </Field>
+                <ErrorMessage name="categoryId" component="div" className="text-red-500 text-sm mt-1" />
           </div>
 
           {/* Portion Sizes and Prices */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Portion Sizes & Prices *
+                    Portion Sizes & Prices <span className="text-red-500">*</span>
               </label>
               <button
                 type="button"
-                onClick={addPortionPrice}
+                    onClick={() => addPortionPrice(setFieldValue, values)}
                 className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
               >
                 + Add Portion
@@ -350,17 +425,19 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
             </div>
             
             <div className="space-y-3">
-              {portionPrices.map((portionPrice, index) => (
+                  {values.portionPrices.map((portionPrice, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md">
                   <div className="flex-1">
                     <select
                       value={portionPrice.portionId}
-                      onChange={(e) => handlePortionPriceChange(index, 'portionId', e.target.value)}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          onChange={(e) => handlePortionPriceChange(index, 'portionId', e.target.value, setFieldValue, values)}
+                          onBlur={handleBlur}
+                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[index] ? 'border-red-500' : 'border-gray-300'
+                          }`}
                     >
                       <option value="">Select portion</option>
-                      {getAvailablePortions(index).map((portion) => (
+                          {getAvailablePortions(index, values).map((portion) => (
                         <option key={portion.id} value={portion.id}>
                           {portion.name} {portion.description && `- ${portion.description}`}
                         </option>
@@ -372,19 +449,23 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                     <input
                       type="number"
                       value={portionPrice.price}
-                      onChange={(e) => handlePortionPriceChange(index, 'price', e.target.value)}
-                      required
+                          onChange={(e) => handlePortionPriceChange(index, 'price', e.target.value, setFieldValue, values)}
+                          onBlur={handleBlur}
                       min="0"
                       step="0.01"
                       placeholder="Price (Rs.)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          pattern="[0-9]*\.?[0-9]{0,2}"
+                          title="Please enter a valid price with up to 2 decimal places"
+                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[index] ? 'border-red-500' : 'border-gray-300'
+                          }`}
                     />
                   </div>
                   
-                  {portionPrices.length > 1 && (
+                      {values.portionPrices.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removePortionPrice(index)}
+                          onClick={() => removePortionPrice(index, setFieldValue, values)}
                       className="text-red-600 hover:text-red-800 p-1"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -395,6 +476,20 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                 </div>
               ))}
             </div>
+                
+                {/* Portion prices error message */}
+                {errors.portionPrices && typeof errors.portionPrices === 'string' && (
+                  <div className="text-red-500 text-sm mt-1">{errors.portionPrices}</div>
+                )}
+                
+                {/* Individual portion price errors */}
+                {errors.portionPrices && Array.isArray(errors.portionPrices) && (
+                  <div className="space-y-1 mt-1">
+                    {errors.portionPrices.map((error, index) => 
+                      error && typeof error === 'string' ? <div key={index} className="text-red-500 text-sm">Portion {index + 1}: {error}</div> : null
+                    )}
+                  </div>
+                )}
           </div>
 
           {/* Image Upload */}
@@ -441,7 +536,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
             </button>
             <button
               type="submit"
-              disabled={isLoading || isUploadingImage}
+                  disabled={isLoading || isUploadingImage || !isValid || !dirty}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-md hover:from-blue-700 hover:to-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading || isUploadingImage ? (
@@ -454,7 +549,9 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
               )}
             </button>
           </div>
-        </form>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );
