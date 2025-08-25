@@ -185,6 +185,7 @@ enum OrderStatus {
   PREPARING
   READY
   SERVED
+  COMPLETED
   CANCELLED
 }
 

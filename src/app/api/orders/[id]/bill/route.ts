@@ -52,8 +52,8 @@ export async function POST(
       },
     });
 
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    const billUrl = `${baseUrl}/bill/${orderId}`;
+    const baseUrl = process.env.BASE_URL!;
+    const billUrl = `${baseUrl}bill/${orderId}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -175,7 +175,7 @@ Wokabulary Team`;
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: 'SERVED',
+        status: 'COMPLETED',
       },
     });
 
