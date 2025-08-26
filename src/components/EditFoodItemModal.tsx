@@ -221,7 +221,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
         description: formData.description.trim() || null,
         categoryId: formData.categoryId,
         imageUrl,
-        portionPrices: validPortionPrices.map(pp => ({
+        portions: validPortionPrices.map(pp => ({
           id: pp.id, // Include existing ID for updates
           portionId: pp.portionId,
           price: parseFloat(pp.price),
