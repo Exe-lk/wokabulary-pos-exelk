@@ -123,19 +123,31 @@ export default function ManageItems() {
       const item = items.find(i => i.id === itemId);
       if (!item) return;
 
-      const response = await fetch(`/api/admin/food-items`, {
+      const response = await fetch(`/api/admin/food-items/${itemId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          id: itemId,
           isActive: !item.isActive,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update item availability');
+        const errorData = await response.json();
+        
+        // Show detailed error message for constraint violations
+        if (errorData.affectedOrders) {
+          const action = item.isActive ? 'disable' : 'enable';
+          const orderList = errorData.affectedOrders
+            .map((order: any) => `Order #${order.orderId} (Table ${order.tableNumber}, Status: ${order.status})`)
+            .join('\n');
+          alert(`Cannot ${action} food item "${item.name}".\n\nAffected incomplete orders:\n${orderList}\n\n${errorData.error}`);
+        } else {
+          alert(errorData.error || 'Failed to update item availability');
+        }
+        
+        throw new Error(errorData.error || 'Failed to update item availability');
       }
 
       // Update local state

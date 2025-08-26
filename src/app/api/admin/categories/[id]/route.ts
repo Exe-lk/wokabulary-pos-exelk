@@ -25,6 +25,30 @@ export async function PUT(
       );
     }
 
+    // If disabling the category, check if it has active food items
+    if (isActive === false && existingCategory.isActive === true) {
+      const activeFoodItems = await prisma.foodItem.findMany({
+        where: {
+          categoryId: id,
+          isActive: true
+        },
+        select: {
+          name: true
+        }
+      });
+
+      if (activeFoodItems.length > 0) {
+        const itemNames = activeFoodItems.map(item => item.name).join(', ');
+        return NextResponse.json(
+          { 
+            error: `Cannot disable category. It contains active food items: ${itemNames}. Please disable these items first.`,
+            affectedItems: activeFoodItems.map(item => item.name)
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // If name is being updated, check for duplicates
     if (name && name !== existingCategory.name) {
       const duplicateCategory = await prisma.category.findUnique({
@@ -81,7 +105,11 @@ export async function DELETE(
     const existingCategory = await prisma.category.findUnique({
       where: { id },
       include: {
-        foodItems: true
+        foodItems: {
+          select: {
+            name: true
+          }
+        }
       }
     });
 
@@ -94,8 +122,12 @@ export async function DELETE(
 
     // Check if category has food items
     if (existingCategory.foodItems.length > 0) {
+      const itemNames = existingCategory.foodItems.map(item => item.name).join(', ');
       return NextResponse.json(
-        { error: 'Cannot delete category that has food items. Please reassign or delete the food items first.' },
+        { 
+          error: `Cannot delete category. It contains food items: ${itemNames}. Please reassign or delete these items first.`,
+          affectedItems: existingCategory.foodItems.map(item => item.name)
+        },
         { status: 400 }
       );
     }

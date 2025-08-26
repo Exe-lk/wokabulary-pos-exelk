@@ -107,6 +107,15 @@ export default function ManageCategories() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Show detailed error message for constraint violations
+        if (errorData.affectedItems) {
+          const action = category.isActive ? 'disable' : 'enable';
+          alert(`Cannot ${action} category "${category.name}".\n\nAffected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+        } else {
+          alert(errorData.error || 'Failed to update category status');
+        }
+        
         throw new Error(errorData.error || 'Failed to update category status');
       }
 
@@ -122,7 +131,10 @@ export default function ManageCategories() {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    if (!confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
       return;
     }
 
@@ -133,6 +145,14 @@ export default function ManageCategories() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Show detailed error message for constraint violations
+        if (errorData.affectedItems) {
+          alert(`Cannot delete category "${category.name}".\n\nAffected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+        } else {
+          alert(errorData.error || 'Failed to delete category');
+        }
+        
         throw new Error(errorData.error || 'Failed to delete category');
       }
 

@@ -53,6 +53,81 @@ export default function PortionsPage() {
     fetchPortions();
   };
 
+  const handleToggleStatus = async (portionId: string) => {
+    try {
+      const portion = portions.find(p => p.id === portionId);
+      if (!portion) return;
+
+      const response = await fetch(`/api/admin/portions/${portionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isActive: !portion.isActive,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Show detailed error message for constraint violations
+        if (errorData.affectedItems) {
+          const action = portion.isActive ? 'disable' : 'enable';
+          alert(`Cannot ${action} portion "${portion.name}".\n\nAffected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+        } else {
+          alert(errorData.error || 'Failed to update portion status');
+        }
+        
+        throw new Error(errorData.error || 'Failed to update portion status');
+      }
+
+      // Update local state
+      setPortions(prevPortions =>
+        prevPortions.map(port =>
+          port.id === portionId ? { ...port, isActive: !port.isActive } : port
+        )
+      );
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeletePortion = async (portionId: string) => {
+    const portion = portions.find(p => p.id === portionId);
+    if (!portion) return;
+
+    if (!confirm(`Are you sure you want to delete the portion "${portion.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/portions/${portionId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Show detailed error message for constraint violations
+        if (errorData.affectedItems) {
+          alert(`Cannot delete portion "${portion.name}".\n\nAffected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+        } else {
+          alert(errorData.error || 'Failed to delete portion');
+        }
+        
+        throw new Error(errorData.error || 'Failed to delete portion');
+      }
+
+      // Remove from local state
+      setPortions(prevPortions =>
+        prevPortions.filter(port => port.id !== portionId)
+      );
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   // if (isLoading) {
   //   return (
   //     <div className="flex items-center justify-center min-h-screen">
@@ -158,9 +233,9 @@ export default function PortionsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
-                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
-                    </th> */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -186,14 +261,26 @@ export default function PortionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(portion.createdAt).toLocaleDateString()}
                       </td>
-                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">
-                          Edit
-                        </button>
-                        <button className="text-red-600 hover:text-red-900">
-                          Delete
-                        </button>
-                      </td> */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => handleToggleStatus(portion.id)}
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                              portion.isActive
+                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            }`}
+                          >
+                            {portion.isActive ? 'Disable' : 'Enable'}
+                          </button>
+                          <button
+                            onClick={() => handleDeletePortion(portion.id)}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
