@@ -76,17 +76,18 @@ model Portion {
 }
 
 model FoodItem {
-  id               String            @id @default(cuid())
-  name             String
-  description      String?
-  imageUrl         String?
-  isActive         Boolean           @default(true)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  categoryId       String
-  foodItemPortions FoodItemPortion[]
-  category         Category          @relation(fields: [categoryId], references: [id])
-  orderItems       OrderItem[]
+  id                 String                @id @default(cuid())
+  name               String
+  description        String?
+  imageUrl           String?
+  isActive           Boolean               @default(true)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  categoryId         String
+  foodItemPortions   FoodItemPortion[]
+  foodItemIngredients FoodItemIngredient[]
+  category           Category              @relation(fields: [categoryId], references: [id])
+  orderItems         OrderItem[]
 
   @@map("food_items")
 }
@@ -100,9 +101,53 @@ model FoodItemPortion {
   updatedAt  DateTime @updatedAt
   foodItem   FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
   portion    Portion  @relation(fields: [portionId], references: [id])
+  ingredients FoodItemPortionIngredient[]
 
   @@unique([foodItemId, portionId])
   @@map("food_item_portions")
+}
+
+model Ingredient {
+  id                   String                @id @default(cuid())
+  name                 String                @unique
+  description          String?
+  unitOfMeasurement    String
+  currentStockQuantity Float                 @default(0)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  foodItemIngredients  FoodItemIngredient[]
+  foodItemPortionIngredients FoodItemPortionIngredient[]
+
+  @@map("ingredients")
+}
+
+model FoodItemIngredient {
+  id           String     @id @default(cuid())
+  foodItemId   String
+  ingredientId String
+  quantity     Float
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  foodItem     FoodItem   @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([foodItemId, ingredientId])
+  @@map("food_item_ingredients")
+}
+
+model FoodItemPortionIngredient {
+  id                String           @id @default(cuid())
+  foodItemPortionId String
+  ingredientId      String
+  quantity          Float
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  foodItemPortion   FoodItemPortion  @relation(fields: [foodItemPortionId], references: [id], onDelete: Cascade)
+  ingredient        Ingredient       @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([foodItemPortionId, ingredientId])
+  @@map("food_item_portion_ingredients")
 }
 
 model Order {

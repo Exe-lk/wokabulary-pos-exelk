@@ -3,86 +3,46 @@
 import { useState } from "react";
 import { showSuccessAlert } from '@/lib/sweetalert';
 
-interface AddPortionModalProps {
+interface AddIngredientMasterProps {
   isOpen: boolean;
   onClose: () => void;
-  onPortionAdded: () => void;
+  onIngredientAdded: () => void;
 }
 
-interface PortionFormData {
-  name: string;
-  description: string;
-}
-
-export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: AddPortionModalProps) {
-  const [formData, setFormData] = useState<PortionFormData>({
-    name: "",
-    description: "",
-  });
+export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded }: AddIngredientMasterProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [unitOfMeasurement, setUnitOfMeasurement] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Client-side validation
-    const trimmedName = formData.name.trim();
-    if (!trimmedName) {
-      setError("Portion name is required");
-      setIsLoading(false);
-      return;
-    }
-
-    if (trimmedName.length < 2) {
-      setError("Portion name must be at least 2 characters long");
-      setIsLoading(false);
-      return;
-    }
-
-    if (trimmedName.length > 50) {
-      setError("Portion name must be less than 50 characters");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch('/api/admin/portions', {
+      const response = await fetch('/api/admin/ingredients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: trimmedName,
-          description: formData.description.trim()
-        }),
+        body: JSON.stringify({ name, description, unitOfMeasurement }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create portion');
+        throw new Error(errorData.error || 'Failed to create ingredient');
       }
 
-      // Reset form and close modal
-      setFormData({
-        name: "",
-        description: "",
-      });
-      onPortionAdded();
+      setName("");
+      setDescription("");
+      setUnitOfMeasurement("");
+      onIngredientAdded();
       onClose();
-      showSuccessAlert('Portion created successfully!');
-
+      showSuccessAlert('Ingredient created successfully!');
     } catch (err: any) {
-      setError(err.message || "Failed to create portion");
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -94,11 +54,8 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Add New Portion Size</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
+          <h2 className="text-xl font-semibold text-gray-900">Add New Ingredient</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -108,23 +65,17 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Portion Name *
+              Ingredient Name *
             </label>
             <input
               type="text"
               id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              maxLength={50}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., Small, Medium, Large, Family Size"
+              placeholder="e.g., Rice, Chicken, Tomatoes"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Minimum 2 characters</span>
-              <span>{formData.name.length}/50</span>
-            </div>
           </div>
 
           <div>
@@ -133,12 +84,26 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
             </label>
             <textarea
               id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="Optional description of the portion size"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Optional description for this ingredient"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="unitOfMeasurement" className="block text-sm font-medium text-gray-700 mb-1">
+              Unit of Measurement *
+            </label>
+            <input
+              type="text"
+              id="unitOfMeasurement"
+              value={unitOfMeasurement}
+              onChange={(e) => setUnitOfMeasurement(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., kg, g, ml, pcs, liters"
             />
           </div>
 
@@ -167,7 +132,7 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
                   Creating...
                 </div>
               ) : (
-                "Add Portion"
+                "Add Ingredient"
               )}
             </button>
           </div>
