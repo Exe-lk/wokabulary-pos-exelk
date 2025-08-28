@@ -43,8 +43,9 @@ export async function POST(request: NextRequest) {
     const order = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const orderItemsData = [];
+      const ingredientReductions = new Map(); // Track ingredient quantity reductions
 
-      // Validate each item and calculate total
+      // Validate each item, calculate total, and check inventory
       for (const item of items) {
         const foodItemPortion = await tx.foodItemPortion.findFirst({
           where: {
@@ -54,11 +55,29 @@ export async function POST(request: NextRequest) {
           include: {
             foodItem: true,
             portion: true,
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
           },
         });
 
         if (!foodItemPortion) {
           throw new Error(`Invalid food item and portion combination: ${item.foodItemId}, ${item.portionId}`);
+        }
+
+        // Calculate ingredient requirements for this order item
+        for (const portionIngredient of foodItemPortion.ingredients) {
+          const requiredQuantity = portionIngredient.quantity * item.quantity;
+          const ingredientId = portionIngredient.ingredientId;
+          
+          // Add to total required quantity for this ingredient
+          if (ingredientReductions.has(ingredientId)) {
+            ingredientReductions.set(ingredientId, ingredientReductions.get(ingredientId) + requiredQuantity);
+          } else {
+            ingredientReductions.set(ingredientId, requiredQuantity);
+          }
         }
 
         const itemTotal = foodItemPortion.price * item.quantity;
@@ -71,6 +90,33 @@ export async function POST(request: NextRequest) {
           unitPrice: foodItemPortion.price,
           totalPrice: itemTotal,
           specialRequests: item.specialRequests || null,
+        });
+      }
+
+      // Check if there's sufficient inventory for all ingredients
+      for (const [ingredientId, requiredQuantity] of ingredientReductions) {
+        const ingredient = await tx.ingredient.findUnique({
+          where: { id: ingredientId },
+        });
+
+        if (!ingredient) {
+          throw new Error(`Ingredient not found: ${ingredientId}`);
+        }
+
+        if (ingredient.currentStockQuantity < requiredQuantity) {
+          throw new Error(`Insufficient inventory for ingredient "${ingredient.name}". Required: ${requiredQuantity} ${ingredient.unitOfMeasurement}, Available: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}`);
+        }
+      }
+
+      // Reduce ingredient stock
+      for (const [ingredientId, requiredQuantity] of ingredientReductions) {
+        await tx.ingredient.update({
+          where: { id: ingredientId },
+          data: {
+            currentStockQuantity: {
+              decrement: requiredQuantity,
+            },
+          },
         });
       }
 
