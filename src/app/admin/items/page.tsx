@@ -5,6 +5,17 @@ import AddFoodItemModal from "@/components/AddFoodItemModal";
 import EditFoodItemModal from "@/components/EditFoodItemModal";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
+interface FoodItemPortionIngredient {
+  id: string;
+  ingredientId: string;
+  quantity: number;
+  ingredient: {
+    id: string;
+    name: string;
+    unitOfMeasurement: string;
+  };
+}
+
 interface FoodItemPortion {
   id: string;
   portionId: string;
@@ -14,6 +25,7 @@ interface FoodItemPortion {
     name: string;
     description: string | null;
   };
+  ingredients: FoodItemPortionIngredient[];
 }
 
 interface FoodItem {
@@ -238,12 +250,12 @@ export default function ManageItems() {
                      <table className="w-full table-fixed">
              <thead className="bg-gray-50 border-b border-gray-200">
                <tr>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/3">Item</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Category</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Portions & Prices</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Price Range</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Status</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/6">Actions</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/4">Item</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Category</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/3">Portions, Prices & Ingredients</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Price Range</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/12">Status</th>
+                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Actions</th>
                </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -275,13 +287,30 @@ export default function ManageItems() {
                     <span className="text-sm text-gray-900">{item.category.name}</span>
                   </td>
                   <td className="py-4 px-4">
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {item.foodItemPortions.map((portion) => (
                         <div key={portion.id} className="text-sm">
-                          <span className="text-gray-700">{portion.portion.name}</span>
-                          <span className="text-blue-600 font-medium ml-2">
-                            {formatPrice(portion.price)}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-700 font-medium">{portion.portion.name}</span>
+                            <span className="text-blue-600 font-medium">
+                              {formatPrice(portion.price)}
+                            </span>
+                          </div>
+                          {portion.ingredients && portion.ingredients.length > 0 && (
+                            <div className="mt-1 text-xs text-gray-500">
+                              <span className="font-medium">Ingredients:</span>
+                              <div className="ml-2 space-y-0.5">
+                                {portion.ingredients.map((ing) => (
+                                  <div key={ing.id} className="flex items-center justify-between">
+                                    <span>{ing.ingredient.name}</span>
+                                    <span className="text-gray-400">
+                                      {ing.quantity} {ing.ingredient.unitOfMeasurement}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

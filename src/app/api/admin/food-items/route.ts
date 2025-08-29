@@ -11,7 +11,12 @@ export async function GET() {
         category: true,
         foodItemPortions: {
           include: {
-            portion: true
+            portion: true,
+            ingredients: {
+              include: {
+                ingredient: true
+              }
+            }
           },
           orderBy: {
             price: 'asc'
@@ -68,20 +73,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if all portions exist
-    const portionIds = portions.map(p => p.portionId);
-    const existingPortions = await prisma.portion.findMany({
-      where: { id: { in: portionIds } }
-    });
+    // Check if all ingredients exist (if provided)
+    const allIngredientIds = portions
+      .flatMap(p => p.ingredients || [])
+      .map((ing: any) => ing.ingredientId)
+      .filter(Boolean);
+    
+    if (allIngredientIds.length > 0) {
+      const existingIngredients = await prisma.ingredient.findMany({
+        where: { id: { in: allIngredientIds } }
+      });
 
-    if (existingPortions.length !== portionIds.length) {
-      return NextResponse.json(
-        { error: 'One or more selected portions do not exist' },
-        { status: 400 }
-      );
+      if (existingIngredients.length !== allIngredientIds.length) {
+        return NextResponse.json(
+          { error: 'One or more selected ingredients do not exist' },
+          { status: 400 }
+        );
+      }
     }
 
-    // Create food item with portions in a transaction
+    // Create food item with portions and ingredients in a transaction
     const foodItem = await prisma.$transaction(async (tx) => {
       // Create the food item first
       const newFoodItem = await tx.foodItem.create({
@@ -93,14 +104,31 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Create food item portions
-      await tx.foodItemPortion.createMany({
-        data: portions.map(portion => ({
-          foodItemId: newFoodItem.id,
-          portionId: portion.portionId,
-          price: parseFloat(portion.price)
-        }))
-      });
+      // Create food item portions and their ingredients
+      for (const portion of portions) {
+        const foodItemPortion = await tx.foodItemPortion.create({
+          data: {
+            foodItemId: newFoodItem.id,
+            portionId: portion.portionId,
+            price: parseFloat(portion.price)
+          }
+        });
+
+        // Create ingredients for this portion if provided
+        if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
+          const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
+          
+          if (validIngredients.length > 0) {
+            await tx.foodItemPortionIngredient.createMany({
+              data: validIngredients.map((ingredient: any) => ({
+                foodItemPortionId: foodItemPortion.id,
+                ingredientId: ingredient.ingredientId,
+                quantity: parseFloat(ingredient.quantity)
+              }))
+            });
+          }
+        }
+      }
 
       // Return the complete food item with relations
       return await tx.foodItem.findUnique({
@@ -109,7 +137,12 @@ export async function POST(request: NextRequest) {
           category: true,
           foodItemPortions: {
             include: {
-              portion: true
+              portion: true,
+              ingredients: {
+                include: {
+                  ingredient: true
+                }
+              }
             },
             orderBy: {
               price: 'asc'
@@ -154,6 +187,25 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Check if all ingredients exist (if provided)
+    const allIngredientIds = portions
+      ?.flatMap((p: any) => p.ingredients || [])
+      .map((ing: any) => ing.ingredientId)
+      .filter(Boolean) || [];
+    
+    if (allIngredientIds.length > 0) {
+      const existingIngredients = await prisma.ingredient.findMany({
+        where: { id: { in: allIngredientIds } }
+      });
+
+      if (existingIngredients.length !== allIngredientIds.length) {
+        return NextResponse.json(
+          { error: 'One or more selected ingredients do not exist' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update food item in a transaction
     const foodItem = await prisma.$transaction(async (tx) => {
       const updateData: any = {};
@@ -179,19 +231,36 @@ export async function PUT(request: NextRequest) {
           }
         }
 
-        // Delete existing portions
+        // Delete existing portions (cascade will handle ingredients)
         await tx.foodItemPortion.deleteMany({
           where: { foodItemId: id }
         });
 
-        // Create new portions
-        await tx.foodItemPortion.createMany({
-          data: portions.map(portion => ({
-            foodItemId: id,
-            portionId: portion.portionId,
-            price: parseFloat(portion.price)
-          }))
-        });
+        // Create new portions with ingredients
+        for (const portion of portions) {
+          const foodItemPortion = await tx.foodItemPortion.create({
+            data: {
+              foodItemId: id,
+              portionId: portion.portionId,
+              price: parseFloat(portion.price)
+            }
+          });
+
+          // Create ingredients for this portion if provided
+          if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
+            const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
+            
+            if (validIngredients.length > 0) {
+              await tx.foodItemPortionIngredient.createMany({
+                data: validIngredients.map((ingredient: any) => ({
+                  foodItemPortionId: foodItemPortion.id,
+                  ingredientId: ingredient.ingredientId,
+                  quantity: parseFloat(ingredient.quantity)
+                }))
+              });
+            }
+          }
+        }
       }
 
       // Return the complete food item with relations
@@ -201,7 +270,12 @@ export async function PUT(request: NextRequest) {
           category: true,
           foodItemPortions: {
             include: {
-              portion: true
+              portion: true,
+              ingredients: {
+                include: {
+                  ingredient: true
+                }
+              }
             },
             orderBy: {
               price: 'asc'

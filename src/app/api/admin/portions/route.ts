@@ -28,29 +28,50 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description } = body;
 
-    if (!name) {
+    if (!name || !name.trim()) {
       return NextResponse.json(
         { error: 'Portion name is required' },
         { status: 400 }
       );
     }
 
-    // Check if portion with same name already exists
-    const existingPortion = await prisma.portion.findUnique({
-      where: { name }
+    // Trim the name and validate length
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2) {
+      return NextResponse.json(
+        { error: 'Portion name must be at least 2 characters long' },
+        { status: 400 }
+      );
+    }
+
+    if (trimmedName.length > 50) {
+      return NextResponse.json(
+        { error: 'Portion name must be less than 50 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Check if portion with same name already exists (case-insensitive)
+    const existingPortion = await prisma.portion.findFirst({
+      where: { 
+        name: {
+          equals: trimmedName,
+          mode: 'insensitive'
+        }
+      }
     });
 
     if (existingPortion) {
       return NextResponse.json(
-        { error: 'Portion with this name already exists' },
+        { error: `Portion with name "${trimmedName}" already exists. Please choose a different name.` },
         { status: 400 }
       );
     }
 
     const portion = await prisma.portion.create({
       data: {
-        name,
-        description: description || null,
+        name: trimmedName,
+        description: description ? description.trim() : null,
       }
     });
 
