@@ -49,14 +49,26 @@ interface StaffUser {
   role: string;
 }
 
+interface Ingredient {
+  id: string;
+  name: string;
+  currentStock: number;
+  reorderLevel: number;
+  unit: string;
+  category: string;
+  lastUpdated: string;
+}
+
 export default function KitchenDashboard() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [staffUser, setStaffUser] = useState<StaffUser | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'orders' | 'ingredients'>('orders');
 
   useEffect(() => {
     // Check if staff is logged in
@@ -80,8 +92,12 @@ export default function KitchenDashboard() {
     }
 
     fetchOrders();
+    fetchIngredients();
     // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchOrders, 30000);
+    const interval = setInterval(() => {
+      fetchOrders();
+      fetchIngredients();
+    }, 30000);
     return () => clearInterval(interval);
   }, [router, statusFilter]);
 
@@ -102,6 +118,19 @@ export default function KitchenDashboard() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchIngredients = async () => {
+    try {
+      const response = await fetch('/api/admin/ingredients');
+      if (!response.ok) {
+        throw new Error('Failed to fetch ingredients');
+      }
+      const data = await response.json();
+      setIngredients(data);
+    } catch (err: any) {
+      console.error('Error fetching ingredients:', err);
     }
   };
 
@@ -209,23 +238,18 @@ export default function KitchenDashboard() {
     }
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-  //         <p className="text-gray-600">Loading orders...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  const getStockStatus = (currentStock: number, reorderLevel: number) => {
+    if (currentStock <= 0) return { status: 'out', color: 'red', icon: '❌' };
+    if (currentStock <= reorderLevel) return { status: 'low', color: 'orange', icon: '⚠️' };
+    return { status: 'good', color: 'green', icon: '✅' };
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Kitchen Orders...</p>
+          <p className="text-gray-600">Loading Kitchen Dashboard...</p>
         </div>
       </div>
     );
@@ -250,39 +274,63 @@ export default function KitchenDashboard() {
                   <p className="text-sm text-gray-600">Your cooking command center</p>
                 </div>
               </div>
-              <div className="flex space-x-3">
-                <div className="bg-orange-100 px-3 py-1 rounded-full">
-                  <span className="text-orange-800 text-sm font-medium">
-                    ⏳ Pending: {orders.filter(o => o.status === 'PENDING').length}
-                  </span>
+              {activeTab === 'orders' && (
+                <div className="flex space-x-3">
+                  <div className="bg-orange-100 px-3 py-1 rounded-full">
+                    <span className="text-orange-800 text-sm font-medium">
+                      ⏳ Pending: {orders.filter(o => o.status === 'PENDING').length}
+                    </span>
+                  </div>
+                  <div className="bg-blue-100 px-3 py-1 rounded-full">
+                    <span className="text-blue-800 text-sm font-medium">
+                      👨‍🍳 Cooking: {orders.filter(o => o.status === 'PREPARING').length}
+                    </span>
+                  </div>
+                  <div className="bg-green-100 px-3 py-1 rounded-full">
+                    <span className="text-green-800 text-sm font-medium">
+                      ✅ Ready: {orders.filter(o => o.status === 'READY').length}
+                    </span>
+                  </div>
                 </div>
-                <div className="bg-blue-100 px-3 py-1 rounded-full">
-                  <span className="text-blue-800 text-sm font-medium">
-                    👨‍🍳 Cooking: {orders.filter(o => o.status === 'PREPARING').length}
-                  </span>
+              )}
+              {activeTab === 'ingredients' && (
+                <div className="flex space-x-3">
+                  <div className="bg-red-100 px-3 py-1 rounded-full">
+                    <span className="text-red-800 text-sm font-medium">
+                      ❌ Out of Stock: {ingredients.filter(i => i.currentStock <= 0).length}
+                    </span>
+                  </div>
+                  <div className="bg-orange-100 px-3 py-1 rounded-full">
+                    <span className="text-orange-800 text-sm font-medium">
+                      ⚠️ Low Stock: {ingredients.filter(i => i.currentStock > 0 && i.currentStock <= i.reorderLevel).length}
+                    </span>
+                  </div>
+                  <div className="bg-green-100 px-3 py-1 rounded-full">
+                    <span className="text-green-800 text-sm font-medium">
+                      ✅ Good Stock: {ingredients.filter(i => i.currentStock > i.reorderLevel).length}
+                    </span>
+                  </div>
                 </div>
-                <div className="bg-green-100 px-3 py-1 rounded-full">
-                  <span className="text-green-800 text-sm font-medium">
-                    ✅ Ready: {orders.filter(o => o.status === 'READY').length}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Center - Welcome message */}
-            <div className="flex-1 flex justify-center">
+            {/* <div className="flex-1 flex justify-center">
               <div className="text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg">
                 <h2 className="text-lg font-semibold">
                   Welcome back, <span className="text-yellow-200">{staffUser?.name}</span>! 👨‍🍳
                 </h2>
                 <p className="text-blue-100 text-sm">Ready to create culinary magic?</p>
               </div>
-            </div>
+            </div> */}
 
             {/* Right side - Refresh and Logout buttons */}
             <div className="flex items-center space-x-3">
               <button
-                onClick={fetchOrders}
+                onClick={() => {
+                  fetchOrders();
+                  fetchIngredients();
+                }}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,8 +352,96 @@ export default function KitchenDashboard() {
         </div>
       </header>
 
-      {/* Filter Tabs */}
+      {/* Tab Navigation */}
       <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-center">
+            <div className="bg-gray-100 rounded-xl p-2 shadow-inner">
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`px-8 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'orders' 
+                    ? 'bg-white text-gray-900 shadow-md transform scale-105' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                📋 Orders
+              </button>
+              <button
+                onClick={() => setActiveTab('ingredients')}
+                className={`px-8 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'ingredients' 
+                    ? 'bg-white text-gray-900 shadow-md transform scale-105' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                🥘 Ingredients
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {activeTab === 'orders' ? (
+          <OrdersTab 
+            orders={orders}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            clearFilter={clearFilter}
+            error={error}
+            updatingOrderId={updatingOrderId}
+            handleStatusUpdate={handleStatusUpdate}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+            formatTime={formatTime}
+            getNextStatus={getNextStatus}
+            getNextStatusButtonText={getNextStatusButtonText}
+          />
+        ) : (
+          <IngredientsTab 
+            ingredients={ingredients}
+            getStockStatus={getStockStatus}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+// Orders Tab Component
+function OrdersTab({ 
+  orders, 
+  statusFilter, 
+  setStatusFilter, 
+  clearFilter, 
+  error, 
+  updatingOrderId, 
+  handleStatusUpdate,
+  getStatusColor,
+  getStatusIcon,
+  formatTime,
+  getNextStatus,
+  getNextStatusButtonText
+}: {
+  orders: Order[];
+  statusFilter: string;
+  setStatusFilter: (filter: string) => void;
+  clearFilter: () => void;
+  error: string;
+  updatingOrderId: string | null;
+  handleStatusUpdate: (orderId: string, newStatus: 'PREPARING' | 'READY') => void;
+  getStatusColor: (status: string) => string;
+  getStatusIcon: (status: string) => string;
+  formatTime: (dateString: string) => string;
+  getNextStatus: (currentStatus: string) => string | null;
+  getNextStatusButtonText: (currentStatus: string) => string;
+}) {
+  return (
+    <>
+      {/* Filter Tabs */}
+      <div className="bg-white shadow-sm border-b border-gray-200 mb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-center">
             <div className="bg-gray-100 rounded-xl p-2 shadow-inner">
@@ -354,202 +490,336 @@ export default function KitchenDashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Filter Indicator */}
-        {statusFilter && (
-          <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </div>
-                <div>
-                  <span className="text-sm font-semibold text-blue-900">
-                    Filtered: {orders.length} {statusFilter === 'PENDING' ? 'pending' : 
-                             statusFilter === 'PREPARING' ? 'cooking' : 
-                             statusFilter === 'READY' ? 'ready' : ''} orders
-                  </span>
-                  <p className="text-xs text-blue-700">Showing filtered results</p>
-                </div>
-              </div>
-              <button
-                onClick={clearFilter}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium bg-white px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
-              >
-                Show All
-              </button>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
+      {/* Filter Indicator */}
+      {statusFilter && (
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-red-600 rounded-lg">
+              <div className="p-2 bg-blue-600 rounded-lg">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
               </div>
-              <p className="text-red-600 font-medium">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {orders.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
-              <div className="text-8xl mb-6">🍽️</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">All Caught Up!</h3>
-              <p className="text-gray-600 mb-6">No pending orders at the moment. Time for a coffee break! ☕</p>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-sm text-blue-700">
-                  💡 Orders will appear here automatically when customers place them
-                </p>
+              <div>
+                <span className="text-sm font-semibold text-blue-900">
+                  Filtered: {orders.length} {statusFilter === 'PENDING' ? 'pending' : 
+                           statusFilter === 'PREPARING' ? 'cooking' : 
+                           statusFilter === 'READY' ? 'ready' : ''} orders
+                </span>
+                <p className="text-xs text-blue-700">Showing filtered results</p>
               </div>
             </div>
+            <button
+              onClick={clearFilter}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium bg-white px-3 py-1 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
+            >
+              Show All
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {orders.map((order) => (
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-red-600 rounded-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-600 font-medium">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {orders.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
+            <div className="text-8xl mb-6">🍽️</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">All Caught Up!</h3>
+            <p className="text-gray-600 mb-6">No pending orders at the moment. Time for a coffee break! ☕</p>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-sm text-blue-700">
+                💡 Orders will appear here automatically when customers place them
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              {/* Order Header */}
+              <div className={`px-6 py-4 border-b border-gray-100 ${
+                order.status === 'PENDING' ? 'bg-gradient-to-r from-orange-50 to-red-50' :
+                order.status === 'PREPARING' ? 'bg-gradient-to-r from-blue-50 to-indigo-50' :
+                'bg-gradient-to-r from-green-50 to-emerald-50'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      Order #{order.id}
+                    </h3>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Table {order.tableNumber}
+                      </span>
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {formatTime(order.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Waiter: {order.staff.name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
+                      <span className="mr-2">{getStatusIcon(order.status)}</span>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="p-6">
+                <div className="space-y-4">
+                  {order.orderItems.map((item) => (
+                    <div key={item.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <span className="bg-blue-600 text-white text-lg font-bold px-3 py-1 rounded-full">
+                              {item.quantity}x
+                            </span>
+                            <div>
+                              <p className="font-semibold text-gray-900 text-lg">
+                                {item.foodItem.name}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {item.portion.name} • Rs. {item.unitPrice.toFixed(2)} each
+                              </p>
+                              {item.specialRequests && (
+                                <div className="mt-2 p-2 bg-yellow-100 rounded-lg border border-yellow-200">
+                                  <p className="text-sm text-yellow-800 flex items-center">
+                                    <span className="mr-2">💬</span>
+                                    <span className="font-medium">Special Request:</span> {item.specialRequests}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900 text-lg">
+                            Rs. {item.totalPrice.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Order Notes */}
+                {order.notes && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-yellow-600 text-lg">📝</span>
+                      <div>
+                        <p className="text-sm font-medium text-yellow-800">Order Notes:</p>
+                        <p className="text-sm text-yellow-700 mt-1">{order.notes}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Total */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-center bg-blue-50 rounded-lg p-4">
+                    <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      Rs. {order.totalAmount.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                {getNextStatus(order.status) && (
+                  <div className="mt-6">
+                    <button
+                      onClick={() => handleStatusUpdate(order.id.toString(), getNextStatus(order.status) as 'PREPARING' | 'READY')}
+                      disabled={updatingOrderId === order.id.toString()}
+                      className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                        order.status === 'PENDING'
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 disabled:from-orange-300 disabled:to-red-300'
+                          : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 disabled:from-blue-300 disabled:to-indigo-300'
+                      }`}
+                    >
+                      {updatingOrderId === order.id.toString() ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          Updating...
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center space-x-2">
+                          <span>{getNextStatusButtonText(order.status)}</span>
+                          {order.status === 'PENDING' ? '🔥' : '✅'}
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// Ingredients Tab Component
+function IngredientsTab({ 
+  ingredients, 
+  getStockStatus 
+}: {
+  ingredients: Ingredient[];
+  getStockStatus: (currentStock: number, reorderLevel: number) => { status: string; color: string; icon: string };
+}) {
+  return (
+    <>
+      <div className="mb-6">
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-3 bg-green-600 rounded-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Ingredient Inventory</h2>
+              <p className="text-sm text-gray-600">Monitor stock levels and manage ingredients</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {ingredients.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
+            <div className="text-8xl mb-6">🥘</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">No Ingredients Found</h3>
+            <p className="text-gray-600 mb-6">No ingredients have been added to the system yet.</p>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-sm text-blue-700">
+                💡 Ingredients will appear here once they are added by the admin
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {ingredients.map((ingredient) => {
+            const stockStatus = getStockStatus(ingredient.currentStock, ingredient.reorderLevel);
+            return (
               <div
-                key={order.id}
-                className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                key={ingredient.id}
+                className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {/* Order Header */}
-                <div className={`px-6 py-4 border-b border-gray-100 ${
-                  order.status === 'PENDING' ? 'bg-gradient-to-r from-orange-50 to-red-50' :
-                  order.status === 'PREPARING' ? 'bg-gradient-to-r from-blue-50 to-indigo-50' :
+                {/* Ingredient Header */}
+                <div className={`px-4 py-3 border-b border-gray-100 ${
+                  stockStatus.status === 'out' ? 'bg-gradient-to-r from-red-50 to-pink-50' :
+                  stockStatus.status === 'low' ? 'bg-gradient-to-r from-orange-50 to-yellow-50' :
                   'bg-gradient-to-r from-green-50 to-emerald-50'
                 }`}>
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        Order #{order.id}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 text-lg mb-1">
+                        {ingredient.name}
                       </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                          Table {order.tableNumber}
-                        </span>
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {formatTime(order.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Waiter: {order.staff.name}
+                      <p className="text-sm text-gray-600 capitalize">
+                        {ingredient.category}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border-2 ${getStatusColor(order.status)}`}>
-                        <span className="mr-2">{getStatusIcon(order.status)}</span>
-                        {order.status}
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border ${
+                        stockStatus.status === 'out' ? 'border-red-300 text-red-800 bg-red-100' :
+                        stockStatus.status === 'low' ? 'border-orange-300 text-orange-800 bg-orange-100' :
+                        'border-green-300 text-green-800 bg-green-100'
+                      }`}>
+                        <span className="mr-1">{stockStatus.icon}</span>
+                        {stockStatus.status === 'out' ? 'Out of Stock' :
+                         stockStatus.status === 'low' ? 'Low Stock' : 'Good Stock'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Order Items */}
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {order.orderItems.map((item) => (
-                      <div key={item.id} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3">
-                              <span className="bg-blue-600 text-white text-lg font-bold px-3 py-1 rounded-full">
-                                {item.quantity}x
-                              </span>
-                              <div>
-                                <p className="font-semibold text-gray-900 text-lg">
-                                  {item.foodItem.name}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {item.portion.name} • Rs. {item.unitPrice.toFixed(2)} each
-                                </p>
-                                {item.specialRequests && (
-                                  <div className="mt-2 p-2 bg-yellow-100 rounded-lg border border-yellow-200">
-                                    <p className="text-sm text-yellow-800 flex items-center">
-                                      <span className="mr-2">💬</span>
-                                      <span className="font-medium">Special Request:</span> {item.specialRequests}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-gray-900 text-lg">
-                              Rs. {item.totalPrice.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Order Notes */}
-                  {order.notes && (
-                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-yellow-600 text-lg">📝</span>
-                        <div>
-                          <p className="text-sm font-medium text-yellow-800">Order Notes:</p>
-                          <p className="text-sm text-yellow-700 mt-1">{order.notes}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Total */}
-                  <div className="mt-6 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center bg-blue-50 rounded-lg p-4">
-                      <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
-                      <span className="text-xl font-bold text-blue-600">
-                        Rs. {order.totalAmount.toFixed(2)}
+                {/* Ingredient Details */}
+                <div className="p-4">
+                  <div className="space-y-3">
+                    {/* Current Stock */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Current Stock:</span>
+                      <span className={`font-bold text-lg ${
+                        stockStatus.status === 'out' ? 'text-red-600' :
+                        stockStatus.status === 'low' ? 'text-orange-600' :
+                        'text-green-600'
+                      }`}>
+                        {ingredient.currentStock} {ingredient.unit}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Action Button */}
-                  {getNextStatus(order.status) && (
-                    <div className="mt-6">
-                      <button
-                        onClick={() => handleStatusUpdate(order.id.toString(), getNextStatus(order.status) as 'PREPARING' | 'READY')}
-                        disabled={updatingOrderId === order.id.toString()}
-                        className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                          order.status === 'PENDING'
-                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 disabled:from-orange-300 disabled:to-red-300'
-                            : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 disabled:from-blue-300 disabled:to-indigo-300'
-                        }`}
-                      >
-                        {updatingOrderId === order.id.toString() ? (
-                          <div className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                            Updating...
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center space-x-2">
-                            <span>{getNextStatusButtonText(order.status)}</span>
-                            {order.status === 'PENDING' ? '🔥' : '✅'}
-                          </div>
-                        )}
-                      </button>
+                    {/* Reorder Level */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Reorder Level:</span>
+                      <span className="font-semibold text-gray-900">
+                        {ingredient.reorderLevel} {ingredient.unit}
+                      </span>
                     </div>
-                  )}
+
+                    {/* Stock Progress Bar */}
+                    <div className="mt-4">
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Stock Level</span>
+                        <span>{Math.round((ingredient.currentStock / Math.max(ingredient.reorderLevel * 2, 1)) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            stockStatus.status === 'out' ? 'bg-red-500' :
+                            stockStatus.status === 'low' ? 'bg-orange-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ 
+                            width: `${Math.min((ingredient.currentStock / Math.max(ingredient.reorderLevel * 2, 1)) * 100, 100)}%` 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Last Updated */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-xs text-gray-500 text-center">
+                        Last updated: {new Date(ingredient.lastUpdated).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
