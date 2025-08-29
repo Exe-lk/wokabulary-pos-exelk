@@ -9,7 +9,7 @@ export async function PUT(
 ) {
   try {
     const { id } = params;
-    const { name, description, unitOfMeasurement, isActive } = await request.json();
+    const { name, description, unitOfMeasurement, reorderLevel, isActive } = await request.json();
 
     if (!name || !unitOfMeasurement) {
       return NextResponse.json(
@@ -56,6 +56,7 @@ export async function PUT(
         name,
         description,
         unitOfMeasurement,
+        reorderLevel: reorderLevel !== undefined ? reorderLevel : existingIngredient.reorderLevel,
         ...(isActive !== undefined && { isActive }),
       },
     });

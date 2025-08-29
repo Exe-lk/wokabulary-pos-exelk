@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { showSuccessAlert } from '@/lib/sweetalert';
+import Swal from 'sweetalert2';
 
 interface Ingredient {
   id: string;
@@ -9,6 +10,7 @@ interface Ingredient {
   description?: string;
   unitOfMeasurement: string;
   currentStockQuantity: number;
+  reorderLevel: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -55,7 +57,37 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
       setQuantity("");
       onStockAdded();
       onClose();
-      showSuccessAlert(`Stock added successfully! ${quantityNum} ${ingredient.unitOfMeasurement} added to ${ingredient.name}`);
+      
+      // Check if this brings the ingredient above reorder level
+      const newStockLevel = ingredient.currentStockQuantity + quantityNum;
+      const wasBelowReorderLevel = ingredient.currentStockQuantity < ingredient.reorderLevel;
+      const isNowAboveReorderLevel = newStockLevel >= ingredient.reorderLevel;
+      
+      if (wasBelowReorderLevel && isNowAboveReorderLevel) {
+        // Special alert for bringing stock above reorder level
+        Swal.fire({
+          title: 'Stock Replenished!',
+          html: `
+            <div class="text-center">
+              <p class="mb-2">✅ <strong>${ingredient.name}</strong> is now above reorder level!</p>
+              <p class="text-sm text-gray-600">New stock level: ${newStockLevel} ${ingredient.unitOfMeasurement}</p>
+              <p class="text-sm text-gray-600">Reorder level: ${ingredient.reorderLevel} ${ingredient.unitOfMeasurement}</p>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'Great!',
+          confirmButtonColor: '#10b981',
+          background: '#ecfdf5',
+          customClass: {
+            popup: 'rounded-lg',
+            title: 'text-green-800 font-semibold',
+            htmlContainer: 'text-green-700'
+          }
+        });
+      } else {
+        // Regular success alert
+        showSuccessAlert(`Stock added successfully! ${quantityNum} ${ingredient.unitOfMeasurement} added to ${ingredient.name}`);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -84,6 +116,14 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
           <p className="text-sm text-blue-800">
             <strong>Current Stock:</strong> {ingredient.currentStockQuantity} {ingredient.unitOfMeasurement}
           </p>
+          <p className="text-sm text-blue-800">
+            <strong>Reorder Level:</strong> {ingredient.reorderLevel} {ingredient.unitOfMeasurement}
+          </p>
+          {ingredient.currentStockQuantity < ingredient.reorderLevel && (
+            <p className="text-sm text-orange-600 font-medium mt-2">
+              ⚠️ Low stock alert: Current stock is below reorder level
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

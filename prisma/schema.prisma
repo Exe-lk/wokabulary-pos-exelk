@@ -113,6 +113,7 @@ model Ingredient {
   description          String?
   unitOfMeasurement    String
   currentStockQuantity Float                 @default(0)
+  reorderLevel         Float                 @default(0)
   isActive             Boolean               @default(true)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt

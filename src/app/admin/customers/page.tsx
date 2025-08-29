@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 
 interface OrderItem {
@@ -277,8 +277,8 @@ export default function CustomersPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {customers.map((customer) => (
-                <>
-                  <tr key={customer.id} className="hover:bg-gray-50">
+                <React.Fragment key={customer.id}>
+                  <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -649,7 +649,7 @@ export default function CustomersPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

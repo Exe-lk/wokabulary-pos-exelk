@@ -13,6 +13,7 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [unitOfMeasurement, setUnitOfMeasurement] = useState("");
+  const [reorderLevel, setReorderLevel] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +28,7 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, description, unitOfMeasurement }),
+        body: JSON.stringify({ name, description, unitOfMeasurement, reorderLevel: parseFloat(reorderLevel) || 0 }),
       });
 
       if (!response.ok) {
@@ -38,6 +39,7 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
       setName("");
       setDescription("");
       setUnitOfMeasurement("");
+      setReorderLevel("");
       onIngredientAdded();
       onClose();
       showSuccessAlert('Ingredient created successfully!');
@@ -105,6 +107,25 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., kg, g, ml, pcs, liters"
             />
+          </div>
+
+          <div>
+            <label htmlFor="reorderLevel" className="block text-sm font-medium text-gray-700 mb-1">
+              Reorder Level
+            </label>
+            <input
+              type="number"
+              id="reorderLevel"
+              value={reorderLevel}
+              onChange={(e) => setReorderLevel(e.target.value)}
+              min="0"
+              step="0.01"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., 10.5"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Alert will be shown when current stock falls below this level
+            </p>
           </div>
 
           {error && (

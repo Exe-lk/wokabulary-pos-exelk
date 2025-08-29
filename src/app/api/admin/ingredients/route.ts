@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, description, unitOfMeasurement } = await request.json();
+    const { name, description, unitOfMeasurement, reorderLevel } = await request.json();
 
     if (!name || !unitOfMeasurement) {
       return NextResponse.json(
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
         name,
         description,
         unitOfMeasurement,
+        reorderLevel: reorderLevel || 0,
         currentStockQuantity: 0,
       },
     });
