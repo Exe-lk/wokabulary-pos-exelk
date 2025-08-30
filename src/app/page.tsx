@@ -18,7 +18,7 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch('https://wokabulary.netlify.app/api/staff/login', {
+      const response = await fetch('/api/staff/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

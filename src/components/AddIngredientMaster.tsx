@@ -23,7 +23,7 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
     setError("");
 
     try {
-      const response = await fetch('https://wokabulary.netlify.app/api/admin/ingredients', {
+      const response = await fetch('/api/admin/ingredients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

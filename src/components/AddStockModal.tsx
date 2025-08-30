@@ -41,7 +41,7 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
     }
 
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/admin/ingredients/${ingredient.id}/add-stock`, {
+      const response = await fetch(`/api/admin/ingredients/${ingredient.id}/add-stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

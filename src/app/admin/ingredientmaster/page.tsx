@@ -57,7 +57,7 @@ export default function ManageCategories() {
 
   const fetchIngredients = async () => {
     try {
-      const response = await fetch('https://wokabulary.netlify.app/api/admin/ingredients');
+      const response = await fetch('/api/admin/ingredients');
       if (!response.ok) {
         throw new Error('Failed to fetch ingredients');
       }
@@ -136,7 +136,7 @@ export default function ManageCategories() {
       const ingredient = ingredients.find(c => c.id === ingredientId);
       if (!ingredient) return;
 
-      const response = await fetch(`https://wokabulary.netlify.app/api/admin/ingredients/${ingredientId}`, {
+      const response = await fetch(`/api/admin/ingredients/${ingredientId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -241,7 +241,7 @@ export default function ManageCategories() {
     }
 
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/admin/ingredients/${ingredientId}`, {
+      const response = await fetch(`/api/admin/ingredients/${ingredientId}`, {
         method: 'DELETE',
       });
 

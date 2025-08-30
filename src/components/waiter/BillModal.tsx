@@ -255,7 +255,7 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
     setSmsStatus('idle');
 
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/orders/${order.id}/bill`, {
+      const response = await fetch(`/api/orders/${order.id}/bill`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

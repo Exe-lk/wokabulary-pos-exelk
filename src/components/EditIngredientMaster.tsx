@@ -45,7 +45,7 @@ export default function EditIngredientMaster({ isOpen, onClose, onIngredientUpda
     setError("");
 
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/admin/ingredients/${ingredient.id}`, {
+      const response = await fetch(`/api/admin/ingredients/${ingredient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

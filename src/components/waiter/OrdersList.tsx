@@ -73,7 +73,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`https://wokabulary.netlify.app/api/waiter/orders?staffId=${staffId}`);
+      const response = await fetch(`/api/waiter/orders?staffId=${staffId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
@@ -89,7 +89,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   const handleServeOrder = async (orderId: string) => {
     try {
       setServingOrderId(orderId);
-      const response = await fetch(`https://wokabulary.netlify.app/api/waiter/orders/${orderId}/status`, {
+      const response = await fetch(`/api/waiter/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

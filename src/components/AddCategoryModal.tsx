@@ -21,7 +21,7 @@ export default function AddCategoryModal({ isOpen, onClose, onCategoryAdded }: A
     setError("");
 
     try {
-      const response = await fetch('https://wokabulary.netlify.app/api/admin/categories', {
+      const response = await fetch('/api/admin/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

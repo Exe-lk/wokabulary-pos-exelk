@@ -67,7 +67,7 @@ export default function AddStaffModal({ isOpen, onClose, onStaffAdded }: AddStaf
       }
 
       // Save staff member to database
-      const response = await fetch('https://wokabulary.netlify.app/api/admin/staff', {
+      const response = await fetch('/api/admin/staff', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
