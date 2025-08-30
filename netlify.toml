@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "yarn build"
   publish = ".next"
 
 [build.environment]
@@ -38,9 +38,9 @@
 
 # Add context-specific redirects
 [context.deploy-preview]
-  command = "npm run build"
+  command = "yarn build"
   publish = ".next"
 
 [context.branch-deploy]
-  command = "npm run build"
+  command = "yarn build"
   publish = ".next"
