@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx prisma/seed.ts",
@@ -14,7 +14,8 @@
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset",
     "setup": "node setup.js",
-    "test:sms": "node test-sms.js"
+    "test:sms": "node test-sms.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",
