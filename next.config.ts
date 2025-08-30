@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   },
   eslint:{
     ignoreDuringBuilds:true,
+  },
+  // Netlify specific configuration
+  output: 'standalone',
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma']
   }
 };
 
