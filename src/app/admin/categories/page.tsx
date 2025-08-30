@@ -51,7 +51,7 @@ export default function ManageCategories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/admin/categories');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/categories');
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
       }
@@ -95,7 +95,7 @@ export default function ManageCategories() {
       const category = categories.find(c => c.id === categoryId);
       if (!category) return;
 
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/categories/${categoryId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export default function ManageCategories() {
     }
 
     try {
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/categories/${categoryId}`, {
         method: 'DELETE',
       });
 

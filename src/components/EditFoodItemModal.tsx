@@ -139,7 +139,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
 
   const fetchPortions = async () => {
     try {
-      const response = await fetch('/api/admin/portions');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/portions');
       if (!response.ok) {
         throw new Error('Failed to fetch portions');
       }
@@ -152,7 +152,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/admin/categories');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/categories');
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
       }
@@ -165,7 +165,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
 
   const fetchIngredients = async () => {
     try {
-      const response = await fetch('/api/admin/ingredients');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/ingredients');
       if (!response.ok) {
         throw new Error('Failed to fetch ingredients');
       }
@@ -308,7 +308,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/admin/upload-image', {
+    const response = await fetch('https://wokabulary.netlify.app/api/admin/upload-image', {
       method: 'POST',
       body: formData,
     });
@@ -373,7 +373,7 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
         })),
       };
 
-      const response = await fetch('/api/admin/food-items', {
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/food-items', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

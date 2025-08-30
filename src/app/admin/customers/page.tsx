@@ -90,7 +90,7 @@ export default function CustomersPage() {
         search: searchTerm
       });
 
-      const response = await fetch(`/api/customers?${params}`);
+      const response = await fetch(`https://wokabulary.netlify.app/api/customers?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch customers');
       }

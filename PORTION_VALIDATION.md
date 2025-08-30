@@ -6,7 +6,7 @@ The portion management system now includes comprehensive validation to prevent d
 ## Backend Validation
 
 ### API Endpoint
-- **POST** `/api/admin/portions`
+- **POST** `https://wokabulary.netlify.app/api/admin/portions`
 
 ### Validation Rules
 

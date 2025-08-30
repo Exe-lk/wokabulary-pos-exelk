@@ -37,7 +37,7 @@ export default function EditCategoryModal({ isOpen, onClose, onCategoryUpdated, 
     setError("");
 
     try {
-      const response = await fetch(`/api/admin/categories/${category.id}`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/admin/categories/${category.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
