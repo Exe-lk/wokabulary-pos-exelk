@@ -21,3 +21,11 @@
 
 [functions."api/*"]
   included_files = ["prisma/**/*"]
+
+# Ensure Prisma is available during build
+[build.processing]
+  skip_processing = false
+
+# Add build plugins if needed
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
