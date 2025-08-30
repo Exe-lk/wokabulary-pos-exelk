@@ -30,7 +30,7 @@
 
 # Force redirects for API routes (ensure they hit the function)
 [[redirects]]
-  from = "https://wokabulary.netlify.app/api/*"
+  from = "/api/*"
   to = "/.netlify/functions/__next_api_handler_:splat"
   status = 200
   force = true
