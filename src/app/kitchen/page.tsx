@@ -108,7 +108,7 @@ export default function KitchenDashboard() {
         params.append('status', statusFilter);
       }
       
-      const response = await fetch(`/api/kitchen/orders?${params}`);
+      const response = await fetch(`https://wokabulary.netlify.app/api/kitchen/orders?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
@@ -123,7 +123,7 @@ export default function KitchenDashboard() {
 
   const fetchIngredients = async () => {
     try {
-      const response = await fetch('/api/admin/ingredients');
+      const response = await fetch('https://wokabulary.netlify.app/api/admin/ingredients');
       if (!response.ok) {
         throw new Error('Failed to fetch ingredients');
       }
@@ -141,7 +141,7 @@ export default function KitchenDashboard() {
   const handleStatusUpdate = async (orderId: string, newStatus: 'PREPARING' | 'READY') => {
     setUpdatingOrderId(orderId);
     try {
-      const response = await fetch(`/api/kitchen/orders/${orderId}/status`, {
+      const response = await fetch(`https://wokabulary.netlify.app/api/kitchen/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

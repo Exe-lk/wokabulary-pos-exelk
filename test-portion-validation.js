@@ -1,6 +1,6 @@
 // Test script to verify portion validation
 const testPortionValidation = async () => {
-  const baseUrl = 'http://localhost:3000/api/admin/portions';
+  const baseUrl = 'https://wokabulary.netlify.app/api/admin/portions';
   
   console.log('Testing Portion Validation...\n');
 

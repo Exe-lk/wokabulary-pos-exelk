@@ -90,7 +90,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 4. Test your database connection:
 ```bash
 # Visit the health check endpoint
-curl http://localhost:3000/api/health
+curl https://wokabulary.netlify.app/api/health
 # or open in browser: http://localhost:3000/api/health
 ```
 
@@ -150,8 +150,8 @@ If you're getting 400 or 404 errors on API routes:
      - `BASE_URL`
 
 2. **Test API Routes**:
-   - Visit `/api/test` to check if API routes are working
-   - Visit `/api/health` to check database connectivity
+   - Visit `https://wokabulary.netlify.app/api/test` to check if API routes are working
+   - Visit `https://wokabulary.netlify.app/api/health` to check database connectivity
 
 3. **Check Netlify Function Logs**:
    - Go to Functions tab in Netlify dashboard

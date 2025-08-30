@@ -87,7 +87,7 @@ export default function CustomerDetailsModal({
     if (phone.length >= 10) {
       setIsSearchingCustomer(true);
       try {
-        const response = await fetch(`/api/customers/search?phone=${phone}`);
+        const response = await fetch(`https://wokabulary.netlify.app/api/customers/search?phone=${phone}`);
         if (response.ok) {
           const customer = await response.json();
           if (customer) {
