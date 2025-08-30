@@ -94,6 +94,48 @@ curl http://localhost:3000/api/health
 # or open in browser: http://localhost:3000/api/health
 ```
 
+## Deployment to Netlify
+
+### Prerequisites
+- A cloud PostgreSQL database (Supabase, PlanetScale, Railway, etc.)
+- Netlify account
+
+### Steps
+
+1. **Prepare Environment Variables**:
+   - Create a `.env` file with your production environment variables
+   - Ensure `DATABASE_URL` points to your cloud database
+   - Set `BASE_URL` to your Netlify domain
+
+2. **Configure Netlify**:
+   - Connect your GitHub repository to Netlify
+   - Set build command: `npm run build`
+   - Set publish directory: `.next`
+   - Add all environment variables in Netlify dashboard
+
+3. **Required Environment Variables for Netlify**:
+   ```env
+   DATABASE_URL="postgresql://username:password@host:port/database"
+   DIRECT_URL="postgresql://username:password@host:port/database"
+   BASE_URL="https://your-site.netlify.app"
+   EMAIL_USER="your-email@gmail.com"
+   EMAIL_PASS="your-app-password"
+   TEXTLK_API_TOKEN="your_textlk_api_token"
+   TEXTLK_SENDER_ID="YourRestaurant"
+   ```
+
+4. **Deploy**:
+   - Push your changes to GitHub
+   - Netlify will automatically build and deploy
+   - Check build logs for any errors
+
+### Troubleshooting Netlify Deployment
+
+- **Prisma CLI not found**: Ensure `prisma` is in `devDependencies`
+- **Database connection errors**: Verify `DATABASE_URL` is correct and accessible
+- **API route errors**: Check that all environment variables are set in Netlify
+- **Build failures**: Ensure Node.js version is 18+ (specified in `.nvmrc`)
+
 ## Database Schema
 
 The application uses the following main models:
