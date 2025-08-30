@@ -9,7 +9,17 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds:true,
   },
   // Netlify specific configuration
-  serverExternalPackages: ['@prisma/client', 'prisma']
+  serverExternalPackages: ['@prisma/client', 'prisma'],
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+  },
+  output: 'standalone',
+  // Ensure API routes work on Netlify
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+  }
 };
 
 export default nextConfig;

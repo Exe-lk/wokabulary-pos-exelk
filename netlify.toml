@@ -5,42 +5,15 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Handle API routes properly for Next.js
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Handle all other routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
 [functions]
-  directory = ".next/serverless"
-  node_bundler = "esbuild"
-
-[functions."api/*"]
-  included_files = ["prisma/**/*"]
-
-# Ensure Prisma is available during build
-[build.processing]
-  skip_processing = false
-
-# Add build plugins if needed
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# Add environment variables for Supabase
-[context.production.environment]
-  NODE_ENV = "production"
-
-# Add context-specific redirects
-[context.deploy-preview]
-  command = "yarn build"
-  publish = ".next"
-
-[context.branch-deploy]
-  command = "yarn build"
-  publish = ".next"
+  node_bundler = "nft"
