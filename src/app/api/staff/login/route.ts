@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/prisma';
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase environment variables are set
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Supabase environment variables not configured');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
     const { email, password } = await request.json();
 
     // Validate input
@@ -18,6 +28,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Attempting login for email:', email);
+
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -25,6 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
+      console.error('Supabase auth error:', authError);
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
@@ -32,11 +45,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!authData.user) {
+      console.error('No user data returned from Supabase');
       return NextResponse.json(
         { error: 'Authentication failed' },
         { status: 401 }
       );
     }
+
+    console.log('Supabase authentication successful for user:', authData.user.id);
 
     // Get staff details from database
     const staff = await prisma.staff.findUnique({
@@ -44,6 +60,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!staff) {
+      console.error('Staff not found in database for Supabase ID:', authData.user.id);
       return NextResponse.json(
         { error: 'Staff member not found' },
         { status: 404 }
@@ -52,6 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Check if staff is active
     if (!staff.isActive) {
+      console.error('Staff account is deactivated:', staff.id);
       return NextResponse.json(
         { error: 'Account is deactivated' },
         { status: 401 }
@@ -63,6 +81,8 @@ export async function POST(request: NextRequest) {
       where: { id: staff.id },
       data: { lastLogin: new Date() },
     });
+
+    console.log('Staff login successful:', staff.id);
 
     // Return success with staff data (excluding sensitive info)
     return NextResponse.json({

@@ -136,6 +136,36 @@ curl http://localhost:3000/api/health
 - **API route errors**: Check that all environment variables are set in Netlify
 - **Build failures**: Ensure Node.js version is 18+ (specified in `.nvmrc`)
 
+### Common API Errors (400/404)
+
+If you're getting 400 or 404 errors on API routes:
+
+1. **Check Environment Variables in Netlify**:
+   - Go to Site settings > Environment variables
+   - Ensure all required variables are set:
+     - `DATABASE_URL`
+     - `DIRECT_URL`
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     - `BASE_URL`
+
+2. **Test API Routes**:
+   - Visit `/api/test` to check if API routes are working
+   - Visit `/api/health` to check database connectivity
+
+3. **Check Netlify Function Logs**:
+   - Go to Functions tab in Netlify dashboard
+   - Look for any error messages in the function logs
+
+4. **Verify Database Connection**:
+   - Ensure your database is accessible from Netlify's servers
+   - Check if your database allows external connections
+
+5. **Supabase Configuration**:
+   - Verify Supabase project is active
+   - Check if Supabase authentication is properly configured
+   - Ensure staff users exist in both Supabase and your database
+
 ## Database Schema
 
 The application uses the following main models:
