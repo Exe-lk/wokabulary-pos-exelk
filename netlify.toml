@@ -1,19 +1,36 @@
 [build]
-  command = "yarn build"
+  command = "npm install && npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
+  NEXT_PRIVATE_TARGET = "server"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Plugin for Next.js support
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 [functions]
   node_bundler = "nft"
+  external_node_modules = ["@prisma/client", "prisma"]
+
+# Headers for better caching and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Cache static assets
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Force redirects for API routes (ensure they hit the function)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/__next_api_handler_:splat"
+  status = 200
+  force = true
