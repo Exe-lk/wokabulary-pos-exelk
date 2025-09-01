@@ -219,14 +219,14 @@ export async function GET(
               <div class="logo-section">
                 <div class="logo">LOGO</div>
                 <div class="restaurant-info">
-                  <h1>Delicious Dining</h1>
+                  <h1>Wokabularyg</h1>
                   <p>Fine Dining Experience</p>
                 </div>
               </div>
               <div class="contact-info">
-                <p>📍 123 Restaurant Street, Food City</p>
-                <p>📞 +1 (555) 123-4567</p>
-                <p>✉️ info@deliciousdining.com</p>
+                <p>📍 49 Old Kottawa Rd, Nugegoda 10250</p>
+                <p>📞 076 608 7824</p>
+                <p>✉️ Wokabularylk@gmail.com</p>
               </div>
             </div>
           </div>

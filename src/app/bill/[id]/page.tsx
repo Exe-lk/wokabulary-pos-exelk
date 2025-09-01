@@ -175,18 +175,18 @@ export default function BillPage() {
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">Delicious Dining</h1>
+                  <h1 className="text-xl font-bold">Wokabulary</h1>
                   <p className="text-blue-100 text-sm">Fine Dining Experience</p>
                 </div>
               </div>
               <div className="text-right text-sm">
                 <p className="text-blue-100 flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
-                  123 Restaurant Street
+                  49 Old Kottawa Rd, Nugegoda 10250
                 </p>
                 <p className="text-blue-100 flex items-center mt-0.5">
                   <Phone className="w-3 h-3 mr-1" />
-                  +1 (555) 123-4567
+                  076 608 7824
                 </p>
               </div>
             </div>
