@@ -8,7 +8,7 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
-    "netlify-build": "prisma generate && npm run build"
+    "netlify-build": "prisma generate && yarn build"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",
