@@ -117,6 +117,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   {pathname === '/admin/waiter-orders' && 'Bill Management'}
                   {pathname === '/admin/reports' && 'Reports & Analytics'}
                   {pathname === '/admin/settings' && 'System Settings'}
+                  {pathname === '/admin/ingredientmaster' && 'Ingredient Master'}
                 </h1>
                 <p className="text-sm text-gray-600">Restaurant Management System</p>
               </div>
