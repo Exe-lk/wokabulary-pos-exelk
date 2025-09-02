@@ -86,6 +86,16 @@ export default function OrdersList({ staffId }: OrdersListProps) {
     }
   };
 
+  // Filter orders based on status filter, excluding completed orders from "All Orders"
+  const filteredOrders = orders.filter(order => {
+    if (statusFilter === '') {
+      // For "All Orders" tab, exclude completed orders
+      return order.status !== 'COMPLETED';
+    }
+    // For specific status filters, show only orders with that status
+    return order.status === statusFilter;
+  });
+
   const handleServeOrder = async (orderId: string) => {
     try {
       setServingOrderId(orderId);
@@ -264,7 +274,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
     <div className="p-4">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">My Orders</h2>
+        <h2 className="text-xl font-semibold text-gray-900">My Active Orders</h2>
       </div>
 
       {/* Status Filter Tabs */}
@@ -279,7 +289,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              All Orders
+              Active Orders
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
@@ -334,7 +344,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span className="text-sm font-medium text-blue-900">
-                Filtered: {orders.length} {statusFilter === 'PENDING' ? 'pending' : 
+                Filtered: {filteredOrders.length} {statusFilter === 'PENDING' ? 'pending' : 
                          statusFilter === 'PREPARING' ? 'preparing' : 
                          statusFilter === 'READY' ? 'ready' : 
                          statusFilter === 'SERVED' ? 'served' : ''} orders
@@ -344,14 +354,14 @@ export default function OrdersList({ staffId }: OrdersListProps) {
               onClick={clearFilter}
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
-              Show All
+              Show Active
             </button>
           </div>
         </div>
       )}
 
       {/* Orders List */}
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="flex items-center justify-center h-64 text-center">
           <div>
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -363,14 +373,14 @@ export default function OrdersList({ staffId }: OrdersListProps) {
             <p className="text-gray-600">
               {statusFilter 
                 ? `No ${statusFilter.toLowerCase().replace('_', ' ')} orders at the moment.`
-                : "You haven't placed any orders yet."
+                : "No active orders found. All orders are completed."
               }
             </p>
           </div>
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div
               key={order.id}
               className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
