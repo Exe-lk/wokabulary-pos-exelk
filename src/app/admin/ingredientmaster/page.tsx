@@ -342,6 +342,71 @@ export default function ManageCategories() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+              <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Ingredients</p>
+                    <p className="text-2xl font-semibold text-gray-900">{ingredients.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">In Stock</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {ingredients.filter(ing => ing.isActive && ing.currentStockQuantity > ing.reorderLevel).length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div className="flex items-center">
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Low Stock</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {ingredients.filter(ing => ing.isActive && ing.currentStockQuantity <= ing.reorderLevel * 1.2 && ing.currentStockQuantity > ing.reorderLevel).length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                <div className="flex items-center">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Critical Stock</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {ingredients.filter(ing => ing.isActive && ing.currentStockQuantity < ing.reorderLevel).length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -433,6 +498,8 @@ export default function ManageCategories() {
                         <div className={`text-sm font-medium flex items-center ${
                           ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive
                             ? 'text-red-600'
+                            : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2 && ingredient.isActive
+                            ? 'text-orange-600'
                             : 'text-gray-900'
                         }`}>
                           {ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive && (
@@ -440,12 +507,52 @@ export default function ManageCategories() {
                               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                           )}
-                          {ingredient.currentStockQuantity} {ingredient.unitOfMeasurement}
+                          {ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2 && ingredient.currentStockQuantity > ingredient.reorderLevel && ingredient.isActive && (
+                            <svg className="w-4 h-4 mr-1 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          <span className="font-semibold">
+                            {ingredient.currentStockQuantity !== undefined && ingredient.currentStockQuantity !== null 
+                              ? ingredient.currentStockQuantity
+                              : 0
+                            }
+                          </span>
+                          <span className="ml-1 text-gray-600">
+                            {ingredient.unitOfMeasurement}
+                          </span>
+                        </div>
+                        {/* Stock Level Progress Bar */}
+                        <div className="mt-2 w-full bg-gray-200 rounded-full h-2 relative group">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              ingredient.currentStockQuantity < ingredient.reorderLevel
+                                ? 'bg-red-500'
+                                : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2
+                                ? 'bg-orange-500'
+                                : 'bg-green-500'
+                            }`}
+                            style={{
+                              width: `${Math.min(100, (ingredient.currentStockQuantity / Math.max(ingredient.reorderLevel * 2, 1)) * 100)}%`
+                            }}
+                          ></div>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                            {ingredient.currentStockQuantity} / {ingredient.reorderLevel * 2} {ingredient.unitOfMeasurement}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {ingredient.reorderLevel} {ingredient.unitOfMeasurement}
+                          <span className="font-semibold">
+                            {ingredient.reorderLevel !== undefined && ingredient.reorderLevel !== null
+                              ? ingredient.reorderLevel
+                              : 0
+                            }
+                          </span>
+                          <span className="ml-1 text-gray-600">
+                            {ingredient.unitOfMeasurement}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
