@@ -10,7 +10,7 @@ export async function PATCH(
     const { id } = await params;
     const { reason } = await request.json();
 
-    // Get current order
+    // Get current order with detailed ingredient information
     const currentOrder = await prisma.order.findUnique({
       where: { id: parseInt(id) },
       select: { 
@@ -18,9 +18,21 @@ export async function PATCH(
         tableNumber: true,
         totalAmount: true,
         orderItems: {
-          include: {
-            foodItem: { select: { name: true } },
-            portion: { select: { name: true } }
+          select: {
+            id: true,
+            quantity: true,
+            foodItem: { 
+              select: { 
+                id: true,
+                name: true 
+              } 
+            },
+            portion: { 
+              select: { 
+                id: true,
+                name: true 
+              } 
+            }
           }
         }
       }
@@ -41,50 +53,108 @@ export async function PATCH(
       );
     }
 
-    // Update the order status to CANCELLED
-    const updatedOrder = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: { 
-        status: 'CANCELLED',
-        notes: reason ? `CANCELLED: ${reason}` : 'CANCELLED',
-        updatedAt: new Date()
-      },
-      include: {
-        staff: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Use transaction to cancel order and restore ingredients
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // Calculate ingredient quantities to restore
+      const ingredientRestorations = new Map<string, number>();
+
+      // Process each order item to calculate ingredient restoration
+      for (const orderItem of currentOrder.orderItems) {
+        // Find the food item portion to get ingredient requirements
+        const foodItemPortion = await tx.foodItemPortion.findUnique({
+          where: {
+            foodItemId_portionId: {
+              foodItemId: orderItem.foodItem.id,
+              portionId: orderItem.portion.id,
+            },
           },
-        },
-        orderItems: {
           include: {
-            foodItem: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-                category: {
-                  select: {
-                    id: true,
-                    name: true,
+            ingredients: {
+              include: {
+                ingredient: true,
+              },
+            },
+          },
+        });
+
+        if (foodItemPortion) {
+          // Calculate ingredient quantities for this order item
+          for (const ingredient of foodItemPortion.ingredients) {
+            const requiredQuantity = ingredient.quantity * orderItem.quantity;
+            const existingQuantity = ingredientRestorations.get(ingredient.ingredientId) || 0;
+            ingredientRestorations.set(ingredient.ingredientId, existingQuantity + requiredQuantity);
+          }
+        }
+      }
+
+      // Restore ingredient stock
+      for (const [ingredientId, quantityToRestore] of ingredientRestorations) {
+        const ingredient = await tx.ingredient.findUnique({
+          where: { id: ingredientId },
+          select: { name: true, currentStockQuantity: true, unitOfMeasurement: true }
+        });
+
+        if (ingredient) {
+          await tx.ingredient.update({
+            where: { id: ingredientId },
+            data: {
+              currentStockQuantity: {
+                increment: quantityToRestore,
+              },
+            },
+          });
+
+          console.log(`Restored ${quantityToRestore} ${ingredient.unitOfMeasurement} of ${ingredient.name} to inventory (Order #${id} cancelled)`);
+        }
+      }
+
+      // Update the order status to CANCELLED
+      const cancelledOrder = await tx.order.update({
+        where: { id: parseInt(id) },
+        data: { 
+          status: 'CANCELLED',
+          notes: reason ? `CANCELLED: ${reason}` : 'CANCELLED',
+          updatedAt: new Date()
+        },
+        include: {
+          staff: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          orderItems: {
+            include: {
+              foodItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  imageUrl: true,
+                  category: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
                   },
                 },
               },
-            },
-            portion: {
-              select: {
-                id: true,
-                name: true,
+              portion: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      return cancelledOrder;
     });
 
     return NextResponse.json({
-      message: 'Order has been cancelled successfully',
+      message: 'Order has been cancelled successfully and ingredients have been restored to inventory',
       order: updatedOrder,
     });
   } catch (error) {
