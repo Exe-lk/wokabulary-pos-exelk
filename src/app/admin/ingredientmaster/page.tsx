@@ -98,7 +98,7 @@ export default function ManageCategories() {
     setEditingIngredient(ingredient);
   };
 
-  const handleAddStock = (ingredient: Ingredient) => {
+  const handleAddStock = async (ingredient: Ingredient) => {
     // Show warning if ingredient is below reorder level
     if (ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive) {
       const result = await showCustomAlert({
