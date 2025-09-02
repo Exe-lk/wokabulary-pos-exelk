@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Restaurant Management System",
+  title: "Wokabulary Restaurant Management System",
   description: "A comprehensive restaurant management system",
 };
 

@@ -106,7 +106,7 @@ export default function Home() {
             </div>
           </div>
           <p className="text-blue-700 font-medium text-center text-2xl font-bold animate-fade-in">
-            Restaurant Management System
+          Wokabulary Restaurant Management System
           </p>
         </div>
 

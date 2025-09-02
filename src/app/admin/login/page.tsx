@@ -78,7 +78,7 @@ export default function AdminLogin() {
             Admin Portal
           </h1>
           <p className="text-blue-200 text-lg font-medium">
-            Restaurant Management System
+          Wokabulary Restaurant Management System
           </p>
         </div>
 
