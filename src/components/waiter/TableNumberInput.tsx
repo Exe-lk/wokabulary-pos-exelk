@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setTableNumber, clearOrder } from '@/redux/slices/orderSlice';
 
@@ -9,6 +9,15 @@ export default function TableNumberInput() {
   const { tableNumber, isOrderInProgress, items } = useAppSelector((state) => state.order);
   const [inputValue, setInputValue] = useState('');
   const [showNewOrderConfirm, setShowNewOrderConfirm] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus and highlight input field when component mounts
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, []);
 
   const handleStartNewOrder = () => {
     if (isOrderInProgress && items.length > 0) {
@@ -55,6 +64,7 @@ export default function TableNumberInput() {
               min="1"
               max="999"
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              ref={inputRef}
             />
             <button
               type="submit"
