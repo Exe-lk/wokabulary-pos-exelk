@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+interface OrderItemIngredient {
+  id: string;
+  quantity: number;
+  ingredient: {
+    id: string;
+    name: string;
+    unitOfMeasurement: string;
+  };
+}
+
 interface OrderItem {
   id: string;
   quantity: number;
@@ -22,6 +32,7 @@ interface OrderItem {
     id: string;
     name: string;
   };
+  ingredients: OrderItemIngredient[];
 }
 
 interface Order {
@@ -50,9 +61,21 @@ interface AdminUser {
   createdAt: string;
 }
 
+interface Ingredient {
+  id: string;
+  name: string;
+  description: string | null;
+  unitOfMeasurement: string;
+  currentStockQuantity?: number;
+  reorderLevel?: number;
+  isActive: boolean;
+  updatedAt: string;
+}
+
 export default function AdminKitchenManagement() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,6 +83,7 @@ export default function AdminKitchenManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [showIngredients, setShowIngredients] = useState(false);
 
   useEffect(() => {
     // Check if admin/cashier is logged in
@@ -83,9 +107,11 @@ export default function AdminKitchenManagement() {
     }
 
     fetchOrders();
+    fetchIngredients();
     // Set up auto-refresh every 10 seconds for real-time updates
     const interval = setInterval(() => {
       fetchOrders();
+      fetchIngredients();
     }, 10000);
     return () => clearInterval(interval);
   }, [router, statusFilter]);
@@ -112,6 +138,19 @@ export default function AdminKitchenManagement() {
       console.error('Error fetching orders:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchIngredients = async () => {
+    try {
+      const response = await fetch('/api/admin/ingredients?withStock=true');
+      if (!response.ok) {
+        throw new Error('Failed to fetch ingredients');
+      }
+      const data = await response.json();
+      setIngredients(data);
+    } catch (error) {
+      console.error('Error fetching ingredients:', error);
     }
   };
 
@@ -275,6 +314,19 @@ export default function AdminKitchenManagement() {
                 Auto-refresh: 10s
               </div>
               <button
+                onClick={() => setShowIngredients(!showIngredients)}
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
+                  showIngredients 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                {showIngredients ? 'Hide Ingredients' : 'Show Ingredients'}
+              </button>
+              <button
                 onClick={fetchOrders}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
               >
@@ -307,6 +359,158 @@ export default function AdminKitchenManagement() {
           </div>
         </div>
       </div>
+
+      {/* Ingredients Section */}
+      {showIngredients && (
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Kitchen Ingredients & Stock</h2>
+                  <p className="text-sm text-gray-600">Monitor ingredient levels and reorder points</p>
+                </div>
+              </div>
+            </div>
+                          <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                                         <thead className="bg-gray-50">
+                       <tr>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Ingredient Name
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Description
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Unit of Measurement
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Current Stock
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Reorder Level
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Stock Status
+                         </th>
+                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                           Last Updated
+                         </th>
+                       </tr>
+                     </thead>
+                                         <tbody className="bg-white divide-y divide-gray-200">
+                       {ingredients.map((ingredient) => (
+                         <tr key={ingredient.id} className="hover:bg-gray-50">
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm font-medium text-gray-900">{ingredient.name}</div>
+                           </td>
+                           <td className="px-6 py-4">
+                             <div className="text-sm text-gray-900 max-w-xs">
+                               {ingredient.description || 'No description'}
+                             </div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm text-gray-900 font-medium">{ingredient.unitOfMeasurement}</div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm text-gray-900">
+                               {ingredient.currentStockQuantity !== undefined 
+                                 ? <span className="font-semibold">{ingredient.currentStockQuantity}</span>
+                                 : <span className="text-gray-400">N/A</span>
+                               }
+                               <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
+                             </div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm text-gray-900">
+                               {ingredient.reorderLevel !== undefined 
+                                 ? <span className="font-semibold">{ingredient.reorderLevel}</span>
+                                 : <span className="text-gray-400">N/A</span>
+                               }
+                               <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
+                             </div>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                               ingredient.currentStockQuantity && ingredient.reorderLevel
+                                 ? ingredient.currentStockQuantity <= ingredient.reorderLevel
+                                   ? 'bg-red-100 text-red-800 border border-red-200'
+                                   : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
+                                   ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                   : 'bg-green-100 text-green-800 border border-green-200'
+                                 : 'bg-gray-100 text-gray-800 border border-gray-200'
+                             }`}>
+                               {ingredient.currentStockQuantity && ingredient.reorderLevel
+                                 ? ingredient.currentStockQuantity <= ingredient.reorderLevel
+                                   ? '⚠️ Low Stock'
+                                   : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
+                                   ? '⚠️ Medium Stock'
+                                   : '✅ Good Stock'
+                                 : 'N/A'
+                               }
+                             </span>
+                           </td>
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             <div className="text-sm text-gray-500">
+                               {ingredient.updatedAt ? new Date(ingredient.updatedAt).toLocaleDateString() : 'N/A'}
+                             </div>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ingredients Summary for Pending Orders */}
+      {showIngredients && pendingOrders.length > 0 && (
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-sm font-medium text-blue-900 mb-3">Ingredients Needed for Pending Orders</h3>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {(() => {
+                  const ingredientTotals = new Map<string, { name: string; totalQuantity: number; unit: string }>();
+                  
+                  pendingOrders.forEach(order => {
+                    order.orderItems.forEach(item => {
+                      if (item.ingredients) {
+                        item.ingredients.forEach(ingredient => {
+                          const key = ingredient.ingredient.id;
+                          const existing = ingredientTotals.get(key);
+                          const quantity = ingredient.quantity * item.quantity;
+                          
+                          if (existing) {
+                            existing.totalQuantity += quantity;
+                          } else {
+                            ingredientTotals.set(key, {
+                              name: ingredient.ingredient.name,
+                              totalQuantity: quantity,
+                              unit: ingredient.ingredient.unitOfMeasurement
+                            });
+                          }
+                        });
+                      }
+                    });
+                  });
+                  
+                  return Array.from(ingredientTotals.values()).map((ingredient, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white px-3 py-2 rounded border">
+                      <span className="text-sm font-medium text-gray-700">{ingredient.name}</span>
+                      <span className="text-sm text-blue-600 font-semibold">
+                        {ingredient.totalQuantity} {ingredient.unit}
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Filter Tabs */}
       <div className="bg-white border-b">
@@ -423,17 +627,36 @@ export default function AdminKitchenManagement() {
                 </div>
 
                 {/* Order Items */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-4">
                   {order.orderItems.slice(0, 3).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{item.foodItem.name}</p>
-                        <p className="text-xs text-gray-500">{item.portion.name}</p>
-                        {item.specialRequests && (
-                          <p className="text-xs text-orange-600 mt-1">⚠️ {item.specialRequests}</p>
-                        )}
+                    <div key={item.id} className="border rounded-lg p-3 bg-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{item.foodItem.name}</p>
+                          <p className="text-xs text-gray-500">{item.portion.name}</p>
+                          {item.specialRequests && (
+                            <p className="text-xs text-orange-600 mt-1">⚠️ {item.specialRequests}</p>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 ml-2">×{item.quantity}</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 ml-2">×{item.quantity}</span>
+                      
+                      {/* Ingredients */}
+                      {item.ingredients && item.ingredients.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-100">
+                          <p className="text-xs font-medium text-gray-700 mb-1">Ingredients:</p>
+                          <div className="space-y-1">
+                            {item.ingredients.map((ingredient) => (
+                              <div key={ingredient.id} className="flex justify-between text-xs">
+                                <span className="text-gray-600">{ingredient.ingredient.name}</span>
+                                <span className="text-gray-800 font-medium">
+                                  {ingredient.quantity} {ingredient.ingredient.unitOfMeasurement}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {order.orderItems.length > 3 && (

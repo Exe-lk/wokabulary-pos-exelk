@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AddFoodItemModal from "@/components/AddFoodItemModal";
 import EditFoodItemModal from "@/components/EditFoodItemModal";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { showErrorAlert } from "@/lib/sweetalert";
 
 interface FoodItemPortionIngredient {
   id: string;
@@ -154,9 +155,12 @@ export default function ManageItems() {
           const orderList = errorData.affectedOrders
             .map((order: any) => `Order #${order.orderId} (Table ${order.tableNumber}, Status: ${order.status})`)
             .join('\n');
-          alert(`Cannot ${action} food item "${item.name}".\n\nAffected incomplete orders:\n${orderList}\n\n${errorData.error}`);
+          showErrorAlert(
+            `Cannot ${action} food item "${item.name}"`,
+            `Affected incomplete orders:\n${orderList}\n\n${errorData.error}`
+          );
         } else {
-          alert(errorData.error || 'Failed to update item availability');
+          showErrorAlert('Error', errorData.error || 'Failed to update item availability');
         }
         
         throw new Error(errorData.error || 'Failed to update item availability');

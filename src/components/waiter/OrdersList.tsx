@@ -127,7 +127,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   };
 
   const handleCancelOrder = async (orderId: string, orderNumber: string) => {
-    // Import Swal dynamically
+    // Import Swal dynamically for complex dialog with textarea
     const Swal = (await import('sweetalert2')).default;
     
     const result = await Swal.fire({

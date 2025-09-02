@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AddCategoryModal from "@/components/AddCategoryModal";
 import EditCategoryModal from "@/components/EditCategoryModal";
+import { showErrorAlert, showConfirmDialog } from "@/lib/sweetalert";
 
 interface Category {
   id: string;
@@ -111,9 +112,12 @@ export default function ManageCategories() {
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
           const action = category.isActive ? 'disable' : 'enable';
-          alert(`Cannot ${action} category "${category.name}".\n\nAffected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+          showErrorAlert(
+            `Cannot ${action} category "${category.name}"`,
+            `Affected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`
+          );
         } else {
-          alert(errorData.error || 'Failed to update category status');
+          showErrorAlert('Error', errorData.error || 'Failed to update category status');
         }
         
         throw new Error(errorData.error || 'Failed to update category status');
@@ -134,7 +138,14 @@ export default function ManageCategories() {
     const category = categories.find(c => c.id === categoryId);
     if (!category) return;
 
-    if (!confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
+    const result = await showConfirmDialog(
+      'Delete Category',
+      `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`,
+      'Delete',
+      'Cancel'
+    );
+    
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -148,9 +159,12 @@ export default function ManageCategories() {
         
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
-          alert(`Cannot delete category "${category.name}".\n\nAffected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+          showErrorAlert(
+            `Cannot delete category "${category.name}"`,
+            `Affected items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`
+          );
         } else {
-          alert(errorData.error || 'Failed to delete category');
+          showErrorAlert('Error', errorData.error || 'Failed to delete category');
         }
         
         throw new Error(errorData.error || 'Failed to delete category');

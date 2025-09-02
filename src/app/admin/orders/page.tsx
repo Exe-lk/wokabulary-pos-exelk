@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { showSuccessAlert, showErrorAlert } from "@/lib/sweetalert";
 
 interface Order {
   id: number;
@@ -177,19 +178,9 @@ export default function OrdersManagement() {
         await fetchOrders();
         
         // Show success message
-        await Swal.fire({
-          title: 'Success!',
-          text: 'Order has been cancelled successfully.',
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        await showSuccessAlert('Success!', 'Order has been cancelled successfully.');
       } catch (err: any) {
-        await Swal.fire({
-          title: 'Error!',
-          text: err.message,
-          icon: 'error'
-        });
+        await showErrorAlert('Error!', err.message);
       }
     }
   };

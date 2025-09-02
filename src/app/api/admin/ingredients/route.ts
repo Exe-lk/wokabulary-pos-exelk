@@ -1,11 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const withStock = searchParams.get('withStock') === 'true';
+
     const ingredients = await prisma.ingredient.findMany({
+      where: {
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        unitOfMeasurement: true,
+        currentStockQuantity: withStock,
+        reorderLevel: withStock,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: {
-        createdAt: 'desc',
+        name: 'asc',
       },
     });
 

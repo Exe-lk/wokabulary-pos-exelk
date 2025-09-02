@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { showSuccessAlert } from '@/lib/sweetalert';
+import { showSuccessAlert, showConfirmDialog } from '@/lib/sweetalert';
 import Swal from "sweetalert2";
 
 interface OrderItem {
@@ -219,22 +219,19 @@ export default function KitchenDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'You will be logged out and redirected to the login page.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, logout'
-    }).then((result: any) => {
-      if (result.isConfirmed) {
-        sessionStorage.removeItem('staff_user');
-        sessionStorage.removeItem('staff_session');
-        router.push("/");
-      }
-    });
+  const handleLogout = async () => {
+    const result = await showConfirmDialog(
+      'Are you sure?',
+      'You will be logged out and redirected to the login page.',
+      'Yes, logout',
+      'Cancel'
+    );
+    
+    if (result.isConfirmed) {
+      sessionStorage.removeItem('staff_user');
+      sessionStorage.removeItem('staff_session');
+      router.push("/");
+    }
   };
 
   const getStatusColor = (status: string) => {

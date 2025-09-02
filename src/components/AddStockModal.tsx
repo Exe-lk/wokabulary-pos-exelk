@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { showSuccessAlert } from '@/lib/sweetalert';
-import Swal from 'sweetalert2';
+import { showSuccessAlert, showCustomAlert } from '@/lib/sweetalert';
 
 interface Ingredient {
   id: string;
@@ -65,7 +64,7 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
       
       if (wasBelowReorderLevel && isNowAboveReorderLevel) {
         // Special alert for bringing stock above reorder level
-        Swal.fire({
+        showCustomAlert({
           title: 'Stock Replenished!',
           html: `
             <div class="text-center">
@@ -75,14 +74,7 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
             </div>
           `,
           icon: 'success',
-          confirmButtonText: 'Great!',
-          confirmButtonColor: '#10b981',
-          background: '#ecfdf5',
-          customClass: {
-            popup: 'rounded-lg',
-            title: 'text-green-800 font-semibold',
-            htmlContainer: 'text-green-700'
-          }
+          confirmButtonText: 'Great!'
         });
       } else {
         // Regular success alert
