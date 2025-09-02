@@ -63,11 +63,30 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4 relative">
-      {/* Professional Ocean Blue Background Pattern */}
-      <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0l28-28v2L54 40h-2zm4 0l24-24v2L58 40h-2zm4 0l20-20v2L62 40h-2zm4 0l16-16v2L66 40h-2zm4 0l12-12v2L70 40h-2zm4 0l8-8v2l-6 6h-2zm4 0l4-4v2l-2 2h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }}></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        {/* Floating Circles */}
+        <div className="absolute top-20 left-20 w-32 h-32 bg-blue-200/20 rounded-full animate-float-slow"></div>
+        <div className="absolute top-40 right-32 w-24 h-24 bg-cyan-200/20 rounded-full animate-float-medium"></div>
+        <div className="absolute bottom-32 left-32 w-20 h-20 bg-blue-300/20 rounded-full animate-float-fast"></div>
+        <div className="absolute bottom-20 right-20 w-28 h-28 bg-cyan-300/20 rounded-full animate-float-slow"></div>
+        
+        {/* Floating Squares */}
+        <div className="absolute top-60 left-10 w-16 h-16 bg-blue-100/30 rotate-45 animate-float-medium"></div>
+        <div className="absolute top-20 right-10 w-12 h-12 bg-cyan-100/30 rotate-45 animate-float-fast"></div>
+        <div className="absolute bottom-60 right-10 w-20 h-20 bg-blue-200/20 rotate-45 animate-float-slow"></div>
+        
+        {/* Subtle Wave Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-200/10 via-transparent to-cyan-200/10 animate-wave-slow"></div>
+        </div>
+        
+        {/* Professional Ocean Blue Background Pattern */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05'%3E%3Cpath d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0l28-28v2L54 40h-2zm4 0l24-24v2L58 40h-2zm4 0l20-20v2L62 40h-2zm4 0l16-16v2L66 40h-2zm4 0l12-12v2L70 40h-2zm4 0l8-8v2l-6 6h-2zm4 0l4-4v2l-2 2h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}></div>
+      </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Header Section */}
@@ -86,13 +105,13 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <p className="text-blue-700 font-medium text-center text-2xl font-bold">
+          <p className="text-blue-700 font-medium text-center text-2xl font-bold animate-fade-in">
             Restaurant Management System
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl border border-blue-100 p-8">
+        <div className="bg-white rounded-2xl shadow-2xl border border-blue-100 p-8 hover:shadow-3xl transition-all duration-300 hover:scale-[1.02]">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-blue-900 mb-1 text-center">
               Sign In
