@@ -243,7 +243,7 @@ export default function AdminKitchenManagement() {
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Kitchen Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Orders</h1>
               <p className="text-gray-600">
                 Manage order statuses and kitchen operations - {adminUser?.role === 'CASHIER' ? 'Cashier' : 'Admin'} Dashboard
               </p>
