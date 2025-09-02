@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AddIngredientMaster from "@/components/AddIngredientMaster";
 import EditIngredientMaster from "@/components/EditIngredientMaster";
 import AddStockModal from "@/components/AddStockModal";
+import { showCustomAlert, showErrorAlert, showConfirmDialog } from '@/lib/sweetalert';
 import Swal from 'sweetalert2';
 
 interface Ingredient {
@@ -100,7 +101,7 @@ export default function ManageCategories() {
   const handleAddStock = (ingredient: Ingredient) => {
     // Show warning if ingredient is below reorder level
     if (ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive) {
-      Swal.fire({
+      const result = await showCustomAlert({
         title: 'Low Stock Warning',
         html: `
           <div class="text-left">
@@ -112,20 +113,12 @@ export default function ManageCategories() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Continue Adding Stock',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#6b7280',
-        background: '#fef3c7',
-        customClass: {
-          popup: 'rounded-lg',
-          title: 'text-orange-800 font-semibold',
-          htmlContainer: 'text-orange-700'
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          setAddingStockTo(ingredient);
-        }
+        cancelButtonText: 'Cancel'
       });
+      
+      if (result.isConfirmed) {
+        setAddingStockTo(ingredient);
+      }
     } else {
       setAddingStockTo(ingredient);
     }
@@ -152,7 +145,7 @@ export default function ManageCategories() {
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
           const action = ingredient.isActive ? 'disable' : 'enable';
-          Swal.fire({
+          showCustomAlert({
             title: `Cannot ${action.charAt(0).toUpperCase() + action.slice(1)} Ingredient`,
             html: `
               <div class="text-left">
@@ -162,17 +155,10 @@ export default function ManageCategories() {
               </div>
             `,
             icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
+            confirmButtonText: 'OK'
           });
         } else {
-          Swal.fire({
-            title: 'Error',
-            text: errorData.error || 'Failed to update ingredient status',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
-          });
+          showErrorAlert('Error', errorData.error || 'Failed to update ingredient status');
         }
         
         throw new Error(errorData.error || 'Failed to update ingredient status');
@@ -224,16 +210,12 @@ export default function ManageCategories() {
       }
     } else {
       // Regular confirmation for normal ingredients
-      const result = await Swal.fire({
-        title: 'Delete Ingredient?',
-        text: `Are you sure you want to delete "${ingredient.name}"? This action cannot be undone.`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, Delete',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280'
-      });
+      const result = await showConfirmDialog(
+        'Delete Ingredient?',
+        `Are you sure you want to delete "${ingredient.name}"? This action cannot be undone.`,
+        'Yes, Delete',
+        'Cancel'
+      );
       
       if (!result.isConfirmed) {
         return;
@@ -250,7 +232,7 @@ export default function ManageCategories() {
         
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
-          Swal.fire({
+          showCustomAlert({
             title: 'Cannot Delete Ingredient',
             html: `
               <div class="text-left">
@@ -260,17 +242,10 @@ export default function ManageCategories() {
               </div>
             `,
             icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
+            confirmButtonText: 'OK'
           });
         } else {
-          Swal.fire({
-            title: 'Error',
-            text: errorData.error || 'Failed to delete ingredient',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#dc2626'
-          });
+          showErrorAlert('Error', errorData.error || 'Failed to delete ingredient');
         }
         
         throw new Error(errorData.error || 'Failed to delete ingredient');
@@ -306,7 +281,7 @@ export default function ManageCategories() {
         `<li><strong>${ing.name}</strong>: ${ing.currentStockQuantity} ${ing.unitOfMeasurement} (Reorder level: ${ing.reorderLevel} ${ing.unitOfMeasurement})</li>`
       ).join('');
       
-      Swal.fire({
+      showCustomAlert({
         title: 'Low Stock Alert!',
         html: `
           <div class="text-left">
@@ -317,14 +292,7 @@ export default function ManageCategories() {
           </div>
         `,
         icon: 'warning',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#f59e0b',
-        background: '#fef3c7',
-        customClass: {
-          popup: 'rounded-lg',
-          title: 'text-orange-800 font-semibold',
-          htmlContainer: 'text-orange-700'
-        }
+        confirmButtonText: 'OK'
       });
     }
   }, [isLoading, lowStockIngredients]);

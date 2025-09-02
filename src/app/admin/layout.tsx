@@ -120,7 +120,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   {pathname === '/admin/settings' && 'System Settings'}
                   {pathname === '/admin/ingredientmaster' && 'Ingredient Master'}
                 </h1>
-                <p className="text-sm text-gray-600">Restaurant Management System</p>
+                <p className="text-sm text-gray-600">Wokabulary Restaurant Management System</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">

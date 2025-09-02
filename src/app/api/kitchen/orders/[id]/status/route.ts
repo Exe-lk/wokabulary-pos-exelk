@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // PATCH /api/kitchen/orders/[id]/status - Update order status sequentially
+// Note: Order cancellation is handled by /api/orders/[id]/cancel endpoint
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

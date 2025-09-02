@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+            role: true,
           },
         },
         orderItems: {
@@ -57,7 +58,47 @@ export async function GET(request: NextRequest) {
       ],
     });
 
-    return NextResponse.json(orders);
+    // Fetch ingredient details for each order item
+    const ordersWithIngredients = await Promise.all(
+      orders.map(async (order) => {
+        const orderItemsWithIngredients = await Promise.all(
+          order.orderItems.map(async (orderItem) => {
+            // Find the food item portion to get ingredients
+            const foodItemPortion = await prisma.foodItemPortion.findFirst({
+              where: {
+                foodItemId: orderItem.foodItem.id,
+                portionId: orderItem.portion.id,
+              },
+              include: {
+                ingredients: {
+                  include: {
+                    ingredient: {
+                      select: {
+                        id: true,
+                        name: true,
+                        unitOfMeasurement: true,
+                      },
+                    },
+                  },
+                },
+              },
+            });
+
+            return {
+              ...orderItem,
+              ingredients: foodItemPortion?.ingredients || [],
+            };
+          })
+        );
+
+        return {
+          ...order,
+          orderItems: orderItemsWithIngredients,
+        };
+      })
+    );
+
+    return NextResponse.json(ordersWithIngredients);
   } catch (error) {
     console.error('Error fetching kitchen orders:', error);
     return NextResponse.json(

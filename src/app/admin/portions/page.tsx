@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AddPortionModal from "@/components/AddPortionModal";
+import { showErrorAlert, showConfirmDialog } from "@/lib/sweetalert";
 
 interface Portion {
   id: string;
@@ -74,9 +75,12 @@ export default function PortionsPage() {
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
           const action = portion.isActive ? 'disable' : 'enable';
-          alert(`Cannot ${action} portion "${portion.name}".\n\nAffected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+          showErrorAlert(
+            `Cannot ${action} portion "${portion.name}"`,
+            `Affected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`
+          );
         } else {
-          alert(errorData.error || 'Failed to update portion status');
+          showErrorAlert('Error', errorData.error || 'Failed to update portion status');
         }
         
         throw new Error(errorData.error || 'Failed to update portion status');
@@ -97,7 +101,14 @@ export default function PortionsPage() {
     const portion = portions.find(p => p.id === portionId);
     if (!portion) return;
 
-    if (!confirm(`Are you sure you want to delete the portion "${portion.name}"? This action cannot be undone.`)) {
+    const result = await showConfirmDialog(
+      'Delete Portion',
+      `Are you sure you want to delete the portion "${portion.name}"? This action cannot be undone.`,
+      'Delete',
+      'Cancel'
+    );
+    
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -111,9 +122,12 @@ export default function PortionsPage() {
         
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
-          alert(`Cannot delete portion "${portion.name}".\n\nAffected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`);
+          showErrorAlert(
+            `Cannot delete portion "${portion.name}"`,
+            `Affected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`
+          );
         } else {
-          alert(errorData.error || 'Failed to delete portion');
+          showErrorAlert('Error', errorData.error || 'Failed to delete portion');
         }
         
         throw new Error(errorData.error || 'Failed to delete portion');

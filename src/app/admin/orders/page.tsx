@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { showSuccessAlert, showErrorAlert } from "@/lib/sweetalert";
 
 interface Order {
   id: number;
@@ -136,6 +137,52 @@ export default function OrdersManagement() {
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
+  };
+
+  const handleCancelOrder = async (orderId: number, orderNumber: number) => {
+    // Import Swal dynamically
+    const Swal = (await import('sweetalert2')).default;
+    
+    const result = await Swal.fire({
+      title: 'Cancel Order?',
+      text: `Are you sure you want to cancel Order #${orderNumber}? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Cancel Order',
+      cancelButtonText: 'Keep Order',
+      input: 'textarea',
+      inputPlaceholder: 'Optional: Enter reason for cancellation...',
+      inputAttributes: {
+        'aria-label': 'Reason for cancellation'
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/cancel`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reason: result.value || 'Cancelled by admin' }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to cancel order');
+        }
+
+        // Refresh orders after successful cancellation
+        await fetchOrders();
+        
+        // Show success message
+        await showSuccessAlert('Success!', 'Order has been cancelled successfully.');
+      } catch (err: any) {
+        await showErrorAlert('Error!', err.message);
+      }
+    }
   };
 
   const closeModal = () => {
@@ -302,12 +349,22 @@ export default function OrdersManagement() {
                     {formatDate(order.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleViewDetails(order)}
-                      className="text-purple-600 hover:text-purple-900"
-                    >
-                      View Details
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleViewDetails(order)}
+                        className="text-purple-600 hover:text-purple-900"
+                      >
+                        View Details
+                      </button>
+                      {order.status === 'PREPARING' && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id, order.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
