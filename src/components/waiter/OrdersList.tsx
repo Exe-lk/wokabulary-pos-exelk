@@ -86,11 +86,11 @@ export default function OrdersList({ staffId }: OrdersListProps) {
     }
   };
 
-  // Filter orders based on status filter, excluding completed orders from "All Orders"
+  // Filter orders based on status filter, excluding completed and cancelled orders from "All Orders"
   const filteredOrders = orders.filter(order => {
     if (statusFilter === '') {
-      // For "All Orders" tab, exclude completed orders
-      return order.status !== 'COMPLETED';
+      // For "All Orders" tab, exclude completed and cancelled orders
+      return order.status !== 'COMPLETED' && order.status !== 'CANCELLED';
     }
     // For specific status filters, show only orders with that status
     return order.status === statusFilter;
@@ -123,6 +123,57 @@ export default function OrdersList({ staffId }: OrdersListProps) {
       setError(err.message);
     } finally {
       setServingOrderId(null);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+    // Import Swal dynamically
+    const Swal = (await import('sweetalert2')).default;
+    
+    const result = await Swal.fire({
+      title: 'Cancel Order?',
+      text: `Are you sure you want to cancel Order #${orderNumber}? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Cancel Order',
+      cancelButtonText: 'Keep Order',
+      input: 'textarea',
+      inputPlaceholder: 'Optional: Enter reason for cancellation...',
+      inputAttributes: {
+        'aria-label': 'Reason for cancellation'
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setServingOrderId(orderId); // Reuse the loading state
+        const response = await fetch(`/api/orders/${orderId}/cancel`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reason: result.value || 'Cancelled by waiter' }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to cancel order');
+        }
+
+        // Update the order in the local state
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === orderId ? { ...order, status: 'CANCELLED' } : order
+          )
+        );
+        showSuccessAlert('Order cancelled successfully!');
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setServingOrderId(null);
+      }
     }
   };
 
@@ -331,6 +382,16 @@ export default function OrdersList({ staffId }: OrdersListProps) {
             >
               Served ({orders.filter(o => o.status === 'SERVED').length})
             </button>
+            <button
+              onClick={() => setStatusFilter('CANCELLED')}
+              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
+                statusFilter === 'CANCELLED' 
+                  ? 'bg-red-500 text-white shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Cancelled ({orders.filter(o => o.status === 'CANCELLED').length})
+            </button>
           </div>
         </div>
       </div>
@@ -347,7 +408,8 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                 Filtered: {filteredOrders.length} {statusFilter === 'PENDING' ? 'pending' : 
                          statusFilter === 'PREPARING' ? 'preparing' : 
                          statusFilter === 'READY' ? 'ready' : 
-                         statusFilter === 'SERVED' ? 'served' : ''} orders
+                         statusFilter === 'SERVED' ? 'served' : 
+                         statusFilter === 'CANCELLED' ? 'cancelled' : ''} orders
               </span>
             </div>
             <button
@@ -472,7 +534,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
               </div>
 
               {/* Action Buttons - Only show for non-completed orders */}
-              {order.status !== 'COMPLETED' && (
+              {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
                 <div className="p-4 border-t border-gray-200">
                   <div className="flex space-x-3">
                     {/* Serve Order Button - Only for READY orders */}
@@ -493,6 +555,29 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             Serve Order
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Cancel Order Button - Only for PREPARING orders */}
+                    {order.status === 'PREPARING' && (
+                      <button
+                        onClick={() => handleCancelOrder(order.id, order.id)}
+                        disabled={servingOrderId === order.id}
+                        className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      >
+                        {servingOrderId === order.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Cancelling...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancel Order
                           </>
                         )}
                       </button>

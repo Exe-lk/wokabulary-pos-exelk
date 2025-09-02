@@ -175,6 +175,50 @@ export default function KitchenDashboard() {
     }
   };
 
+  const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+    const result = await Swal.fire({
+      title: 'Cancel Order?',
+      text: `Are you sure you want to cancel Order #${orderNumber}? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Cancel Order',
+      cancelButtonText: 'Keep Order',
+      input: 'textarea',
+      inputPlaceholder: 'Optional: Enter reason for cancellation...',
+      inputAttributes: {
+        'aria-label': 'Reason for cancellation'
+      }
+    });
+
+    if (result.isConfirmed) {
+      setUpdatingOrderId(orderId);
+      try {
+        const response = await fetch(`/api/orders/${orderId}/cancel`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reason: result.value || 'Cancelled from kitchen' }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to cancel order');
+        }
+
+        // Refresh orders after successful cancellation
+        await fetchOrders();
+        showSuccessAlert('Order cancelled successfully!');
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    }
+  };
+
   const handleLogout = () => {
     Swal.fire({
       title: 'Are you sure?',
@@ -409,6 +453,7 @@ export default function KitchenDashboard() {
             error={error}
             updatingOrderId={updatingOrderId}
             handleStatusUpdate={handleStatusUpdate}
+            handleCancelOrder={handleCancelOrder}
             getStatusColor={getStatusColor}
             getStatusIcon={getStatusIcon}
             formatTime={formatTime}
@@ -435,6 +480,7 @@ function OrdersTab({
   error, 
   updatingOrderId, 
   handleStatusUpdate,
+  handleCancelOrder,
   getStatusColor,
   getStatusIcon,
   formatTime,
@@ -448,6 +494,7 @@ function OrdersTab({
   error: string;
   updatingOrderId: string | null;
   handleStatusUpdate: (orderId: string, newStatus: 'PREPARING' | 'READY') => void;
+  handleCancelOrder: (orderId: string, orderNumber: string) => void;
   getStatusColor: (status: string) => string;
   getStatusIcon: (status: string) => string;
   formatTime: (dateString: string) => string;
@@ -669,8 +716,8 @@ function OrdersTab({
                 </div>
 
                 {/* Action Button */}
+                <div className="mt-6 space-y-3">
                 {getNextStatus(order.status) && (
-                  <div className="mt-6">
                     <button
                       onClick={() => handleStatusUpdate(order.id.toString(), getNextStatus(order.status) as 'PREPARING' | 'READY')}
                       disabled={updatingOrderId === order.id.toString()}
@@ -692,8 +739,29 @@ function OrdersTab({
                         </div>
                       )}
                     </button>
+                  )}
+                  
+                  {/* Cancel Button - Only show for PREPARING orders */}
+                  {order.status === 'PREPARING' && (
+                    <button
+                      onClick={() => handleCancelOrder(order.id.toString(), order.id.toString())}
+                      disabled={updatingOrderId === order.id.toString()}
+                      className="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 disabled:from-red-300 disabled:to-red-400"
+                    >
+                      {updatingOrderId === order.id.toString() ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          Cancelling...
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center space-x-2">
+                          <span>Cancel Order</span>
+                          <span>❌</span>
                   </div>
+                      )}
+                    </button>
                 )}
+                </div>
               </div>
             </div>
           ))}

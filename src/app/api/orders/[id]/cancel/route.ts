@@ -1,26 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// PATCH /api/kitchen/orders/[id]/status - Update order status sequentially
-// Note: Order cancellation is handled by /api/orders/[id]/cancel endpoint
+// PATCH /api/orders/[id]/cancel - Cancel an order (only if status is PREPARING)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const { status } = await request.json();
-
-    // Validate status transition
-    const validTransitions = {
-      'PENDING': 'PREPARING',
-      'PREPARING': 'READY',
-    };
+    const { reason } = await request.json();
 
     // Get current order
     const currentOrder = await prisma.order.findUnique({
       where: { id: parseInt(id) },
-      select: { status: true }
+      select: { 
+        status: true,
+        tableNumber: true,
+        totalAmount: true,
+        orderItems: {
+          include: {
+            foodItem: { select: { name: true } },
+            portion: { select: { name: true } }
+          }
+        }
+      }
     });
 
     if (!currentOrder) {
@@ -30,19 +33,22 @@ export async function PATCH(
       );
     }
 
-    // Check if the status transition is valid
-    if (!validTransitions[currentOrder.status as keyof typeof validTransitions] || 
-        validTransitions[currentOrder.status as keyof typeof validTransitions] !== status) {
+    // Only allow cancellation if order is in PREPARING status
+    if (currentOrder.status !== 'PREPARING') {
       return NextResponse.json(
-        { error: `Invalid status transition from ${currentOrder.status} to ${status}` },
+        { error: `Cannot cancel order with status ${currentOrder.status}. Only orders in PREPARING status can be cancelled.` },
         { status: 400 }
       );
     }
 
-    // Update the order status
+    // Update the order status to CANCELLED
     const updatedOrder = await prisma.order.update({
       where: { id: parseInt(id) },
-      data: { status },
+      data: { 
+        status: 'CANCELLED',
+        notes: reason ? `CANCELLED: ${reason}` : 'CANCELLED',
+        updatedAt: new Date()
+      },
       include: {
         staff: {
           select: {
@@ -78,14 +84,14 @@ export async function PATCH(
     });
 
     return NextResponse.json({
-      message: `Order status updated to ${status}`,
+      message: 'Order has been cancelled successfully',
       order: updatedOrder,
     });
   } catch (error) {
-    console.error('Error updating order status:', error);
+    console.error('Error cancelling order:', error);
     return NextResponse.json(
-      { error: 'Failed to update order status' },
+      { error: 'Failed to cancel order' },
       { status: 500 }
     );
   }
-} 
+}
