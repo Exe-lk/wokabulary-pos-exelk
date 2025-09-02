@@ -460,45 +460,23 @@ export default function AdminKitchenManagement() {
                 {/* Action Buttons */}
                 <div className="space-y-2">
                   {order.status === 'PENDING' && (
-                    <button
-                      onClick={() => handleStatusUpdate(order.id, 'PREPARING')}
-                      disabled={updatingOrderId === order.id}
-                      className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    >
-                      {updatingOrderId === order.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Starting...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                          Start Preparing
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {order.status === 'PREPARING' && (
                     <div className="space-y-2">
                       <button
-                        onClick={() => handleStatusUpdate(order.id, 'READY')}
+                        onClick={() => handleStatusUpdate(order.id, 'PREPARING')}
                         disabled={updatingOrderId === order.id}
-                        className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         {updatingOrderId === order.id ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Marking...
+                            Starting...
                           </>
                         ) : (
                           <>
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            Mark as Ready
+                            Start Preparing
                           </>
                         )}
                       </button>
@@ -522,6 +500,28 @@ export default function AdminKitchenManagement() {
                         )}
                       </button>
                     </div>
+                  )}
+
+                  {order.status === 'PREPARING' && (
+                    <button
+                      onClick={() => handleStatusUpdate(order.id, 'READY')}
+                      disabled={updatingOrderId === order.id}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {updatingOrderId === order.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Marking...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Mark as Ready
+                        </>
+                      )}
+                    </button>
                   )}
 
                   {order.status === 'READY' && (

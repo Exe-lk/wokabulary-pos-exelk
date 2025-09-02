@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// PATCH /api/orders/[id]/cancel - Cancel an order (only if status is PREPARING)
+// PATCH /api/orders/[id]/cancel - Cancel an order (only if status is PENDING)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -45,10 +45,10 @@ export async function PATCH(
       );
     }
 
-    // Only allow cancellation if order is in PREPARING status
-    if (currentOrder.status !== 'PREPARING') {
+    // Only allow cancellation if order is in PENDING status
+    if (currentOrder.status !== 'PENDING') {
       return NextResponse.json(
-        { error: `Cannot cancel order with status ${currentOrder.status}. Only orders in PREPARING status can be cancelled.` },
+        { error: `Cannot cancel order with status ${currentOrder.status}. Only orders in PENDING status can be cancelled.` },
         { status: 400 }
       );
     }
