@@ -52,11 +52,13 @@ interface StaffUser {
 interface Ingredient {
   id: string;
   name: string;
-  currentStock: number;
+  currentStockQuantity: number;
   reorderLevel: number;
-  unit: string;
-  category: string;
-  lastUpdated: string;
+  unitOfMeasurement: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function KitchenDashboard() {
@@ -101,6 +103,11 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, [router, statusFilter]);
 
+  // Debug: Monitor ingredients state changes
+  useEffect(() => {
+    console.log('Ingredients state changed:', ingredients);
+  }, [ingredients]);
+
   const fetchOrders = async () => {
     try {
       const params = new URLSearchParams();
@@ -125,12 +132,16 @@ export default function KitchenDashboard() {
     try {
       const response = await fetch('/api/admin/ingredients');
       if (!response.ok) {
-        throw new Error('Failed to fetch ingredients');
+        const errorText = await response.text();
+        console.error('Response not ok:', errorText);
+        throw new Error(`Failed to fetch ingredients: ${response.status} ${errorText}`);
       }
       const data = await response.json();
+      console.log('Setting ingredients state:', data);
       setIngredients(data);
     } catch (err: any) {
       console.error('Error fetching ingredients:', err);
+      setError(`Failed to load ingredients: ${err.message}`);
     }
   };
 
@@ -238,9 +249,9 @@ export default function KitchenDashboard() {
     }
   };
 
-  const getStockStatus = (currentStock: number, reorderLevel: number) => {
-    if (currentStock <= 0) return { status: 'out', color: 'red', icon: '❌' };
-    if (currentStock <= reorderLevel) return { status: 'low', color: 'orange', icon: '⚠️' };
+  const getStockStatus = (currentStockQuantity: number, reorderLevel: number) => {
+    if (currentStockQuantity <= 0) return { status: 'out', color: 'red', icon: '❌' };
+    if (currentStockQuantity <= reorderLevel) return { status: 'low', color: 'orange', icon: '⚠️' };
     return { status: 'good', color: 'green', icon: '✅' };
   };
 
@@ -295,19 +306,24 @@ export default function KitchenDashboard() {
               )}
               {activeTab === 'ingredients' && (
                 <div className="flex space-x-3">
+                  <div className="bg-gray-100 px-3 py-1 rounded-full">
+                    <span className="text-gray-800 text-sm font-medium">
+                      📊 Total: {ingredients.length}
+                    </span>
+                  </div>
                   <div className="bg-red-100 px-3 py-1 rounded-full">
                     <span className="text-red-800 text-sm font-medium">
-                      ❌ Out of Stock: {ingredients.filter(i => i.currentStock <= 0).length}
+                      ❌ Out of Stock: {ingredients.filter(i => i.currentStockQuantity <= 0).length}
                     </span>
                   </div>
                   <div className="bg-orange-100 px-3 py-1 rounded-full">
                     <span className="text-orange-800 text-sm font-medium">
-                      ⚠️ Low Stock: {ingredients.filter(i => i.currentStock > 0 && i.currentStock <= i.reorderLevel).length}
+                      ⚠️ Low Stock: {ingredients.filter(i => i.currentStockQuantity > 0 && i.currentStockQuantity <= i.reorderLevel).length}
                     </span>
                   </div>
                   <div className="bg-green-100 px-3 py-1 rounded-full">
                     <span className="text-green-800 text-sm font-medium">
-                      ✅ Good Stock: {ingredients.filter(i => i.currentStock > i.reorderLevel).length}
+                      ✅ Good Stock: {ingredients.filter(i => i.currentStockQuantity > i.reorderLevel).length}
                     </span>
                   </div>
                 </div>
@@ -724,12 +740,13 @@ function IngredientsTab({
                 💡 Ingredients will appear here once they are added by the admin
               </p>
             </div>
+
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {ingredients.map((ingredient) => {
-            const stockStatus = getStockStatus(ingredient.currentStock, ingredient.reorderLevel);
+            const stockStatus = getStockStatus(ingredient.currentStockQuantity, ingredient.reorderLevel);
             return (
               <div
                 key={ingredient.id}
@@ -746,9 +763,11 @@ function IngredientsTab({
                       <h3 className="font-bold text-gray-900 text-lg mb-1">
                         {ingredient.name}
                       </h3>
-                      <p className="text-sm text-gray-600 capitalize">
-                        {ingredient.category}
-                      </p>
+                      {ingredient.description && (
+                        <p className="text-sm text-gray-600">
+                          {ingredient.description}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border ${
@@ -775,7 +794,7 @@ function IngredientsTab({
                         stockStatus.status === 'low' ? 'text-orange-600' :
                         'text-green-600'
                       }`}>
-                        {ingredient.currentStock} {ingredient.unit}
+                        {ingredient.currentStockQuantity} {ingredient.unitOfMeasurement}
                       </span>
                     </div>
 
@@ -783,15 +802,20 @@ function IngredientsTab({
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-600">Reorder Level:</span>
                       <span className="font-semibold text-gray-900">
-                        {ingredient.reorderLevel} {ingredient.unit}
+                        {ingredient.reorderLevel} {ingredient.unitOfMeasurement}
                       </span>
                     </div>
 
                     {/* Stock Progress Bar */}
                     <div className="mt-4">
                       <div className="flex justify-between text-xs text-gray-600 mb-1">
-                        <span>Stock Level</span>
-                        <span>{Math.round((ingredient.currentStock / Math.max(ingredient.reorderLevel * 2, 1)) * 100)}%</span>
+                        <span>Stock vs Reorder Level</span>
+                        <span>
+                          {ingredient.currentStockQuantity === 0 ? '0%' : 
+                           ingredient.currentStockQuantity <= ingredient.reorderLevel ? 
+                           `${Math.round((ingredient.currentStockQuantity / ingredient.reorderLevel) * 100)}%` :
+                           '100%+'}
+                        </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
@@ -801,7 +825,9 @@ function IngredientsTab({
                             'bg-green-500'
                           }`}
                           style={{ 
-                            width: `${Math.min((ingredient.currentStock / Math.max(ingredient.reorderLevel * 2, 1)) * 100, 100)}%` 
+                            width: `${ingredient.currentStockQuantity === 0 ? 0 : 
+                                   ingredient.currentStockQuantity <= ingredient.reorderLevel ? 
+                                   Math.min((ingredient.currentStockQuantity / ingredient.reorderLevel) * 100, 100) : 100}%` 
                           }}
                         ></div>
                       </div>
@@ -810,7 +836,7 @@ function IngredientsTab({
                     {/* Last Updated */}
                     <div className="pt-2 border-t border-gray-100">
                       <p className="text-xs text-gray-500 text-center">
-                        Last updated: {new Date(ingredient.lastUpdated).toLocaleDateString()}
+                        Last updated: {new Date(ingredient.updatedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
