@@ -35,9 +35,32 @@ EMAIL_PASS="your-app-password"
 TEXTLK_API_TOKEN="your_textlk_api_token_here"
 TEXTLK_SENDER_ID="YourRestaurant"
 
-# Base URL for bill links
-BASE_URL="http://localhost:3000"
+# Base URL for bill links (IMPORTANT: No trailing slash)
+BASE_URL="https://wokabulary.netlify.app"
 ```
+
+## PDF Generation
+
+The system supports two methods for PDF generation:
+
+### 1. Server-side PDF Generation (Primary)
+- Uses Puppeteer for high-quality PDF generation
+- Requires proper server environment setup
+- Works best in traditional hosting environments
+
+### 2. Client-side PDF Generation (Fallback)
+- Uses jsPDF and html2canvas as fallback
+- Automatically activated if server-side generation fails
+- Works in all environments including serverless
+
+### Troubleshooting PDF Issues
+
+If PDF downloads are not working:
+
+1. **Check Environment Variables**: Ensure `BASE_URL` is set correctly without trailing slash
+2. **Server Logs**: Check console logs for Puppeteer errors
+3. **Fallback Method**: The system will automatically try client-side generation if server-side fails
+4. **Browser Compatibility**: Ensure you're using a modern browser that supports PDF downloads
 
 ## SMS Setup with Text.lk
 
