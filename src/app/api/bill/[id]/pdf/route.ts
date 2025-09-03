@@ -6,6 +6,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let browser: any;
   try {
     const { id } = await params;
     const orderId = parseInt(id);
@@ -312,14 +313,47 @@ export async function GET(
       </html>
     `;
 
-    // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
+    // Generate PDF using Puppeteer with more robust options
+    const puppeteerArgs = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--disable-gpu',
+      '--single-process'
+    ];
+
+    // Add environment-specific options for serverless environments
+    if (process.env.NETLIFY || process.env.VERCEL) {
+      puppeteerArgs.push(
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection'
+      );
+    }
+
+    let browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: puppeteerArgs,
     });
 
     const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({ width: 1200, height: 800 });
+    
+    // Set content and wait for it to be ready
+    await page.setContent(htmlContent, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000 
+    });
+    
+    // Wait a bit more to ensure all styles are applied
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const pdf = await page.pdf({
       format: 'A4',
@@ -330,21 +364,33 @@ export async function GET(
         bottom: '20px',
         left: '20px',
       },
+      timeout: 30000,
     });
-
-    await browser.close();
 
     return new NextResponse(pdf, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="bill-${orderId}.pdf"`,
+        'Cache-Control': 'no-cache',
       },
     });
   } catch (error) {
     console.error('Error generating PDF:', error);
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      { 
+        error: 'Failed to generate PDF',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
+  } finally {
+    // Always close the browser to prevent memory leaks
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error('Error closing browser:', closeError);
+      }
+    }
   }
 } 
