@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Download, MapPin, Phone, Mail, Clock, User, CreditCard } from 'lucide-react';
 import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface OrderItem {
   id: string;
@@ -84,31 +82,12 @@ export default function BillPage() {
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
-      console.log('Starting PDF download...');
-      
-      // Try server-side PDF generation first
       const response = await fetch(`/api/bill/${orderId}/pdf`);
-      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to generate PDF (${response.status})`);
-      }
-      
-      // Check if the response is actually a PDF
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/pdf')) {
-        throw new Error('Invalid PDF response from server');
+        throw new Error('Failed to generate PDF');
       }
       
       const blob = await response.blob();
-      
-      // Verify the blob is not empty
-      if (blob.size === 0) {
-        throw new Error('Generated PDF is empty');
-      }
-      
-      console.log(`PDF generated successfully, size: ${blob.size} bytes`);
-      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -117,75 +96,11 @@ export default function BillPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      // Show success message
-      alert('PDF downloaded successfully!');
     } catch (err: any) {
-      console.error('Server-side PDF generation failed, trying client-side:', err);
-      
-      // Fallback to client-side PDF generation
-      try {
-        console.log('Attempting client-side PDF generation...');
-        await generateClientSidePDF();
-      } catch (clientSideErr: any) {
-        console.error('Client-side PDF generation also failed:', clientSideErr);
-        
-        // Show detailed error message
-        const errorMessage = `PDF generation failed:\n\n` +
-          `Server-side error: ${err.message}\n\n` +
-          `Client-side error: ${clientSideErr.message}\n\n` +
-          `Please try:\n` +
-          `1. Refreshing the page\n` +
-          `2. Using a different browser\n` +
-          `3. Contacting support if the issue persists`;
-        
-        alert(errorMessage);
-      }
+      console.error('Error downloading PDF:', err);
     } finally {
       setIsDownloading(false);
     }
-  };
-
-  const generateClientSidePDF = async () => {
-    // Get the bill content element
-    const billElement = document.getElementById('bill-content');
-    if (!billElement) {
-      throw new Error('Bill content element not found');
-    }
-
-    // Generate PDF using html2canvas and jsPDF
-    const canvas = await html2canvas(billElement, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff'
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 295; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-
-    let position = 0;
-
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    // Add additional pages if content is longer than one page
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    // Download the PDF
-    pdf.save(`bill-${orderId}.pdf`);
-    alert('PDF generated successfully using client-side method!');
   };
 
   const formatDate = (dateString: string) => {
