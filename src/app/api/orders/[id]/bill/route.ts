@@ -132,7 +132,14 @@ export async function POST(
     // Send SMS if phone number is provided
     let smsResult = null;
     if (customerPhone) {
-      try {
+      // Check if SMS configuration is available
+      if (!process.env.TEXTLK_API_TOKEN || !process.env.TEXTLK_SENDER_ID) {
+        smsResult = { 
+          success: false, 
+          error: 'SMS configuration error: TEXTLK_API_TOKEN or TEXTLK_SENDER_ID is not configured' 
+        };
+      } else {
+        try {
         const smsMessage = `Dear ${customerName || 'Valued Customer'},
 
 Your bill for Order #${orderId}${billNumber ? ` (Bill #${billNumber})` : ''} is ready!
@@ -166,9 +173,31 @@ Wokabulary Team`;
         });
 
         console.log('SMS Result:', smsResult);
+        
+        // Normalize the response structure for consistency
+        if (smsResult.status === 'success') {
+          smsResult = { success: true, message: smsResult.message, data: smsResult.data };
+        } else {
+          smsResult = { success: false, error: smsResult.message || 'SMS failed to send' };
+        }
       } catch (smsError: any) {
         console.error('SMS sending failed:', smsError);
-        smsResult = { success: false, error: smsError.message };
+        
+        // Provide more specific error messages
+        let errorMessage = smsError.message || 'Unknown SMS error';
+        
+        if (errorMessage.includes('TEXTLK_API_TOKEN') || errorMessage.includes('not configured')) {
+          errorMessage = 'SMS configuration error: TEXTLK_API_TOKEN is not configured';
+        } else if (errorMessage.includes('TEXTLK_SENDER_ID')) {
+          errorMessage = 'SMS configuration error: TEXTLK_SENDER_ID is not configured';
+        } else if (errorMessage.includes('Invalid phone number')) {
+          errorMessage = 'Invalid phone number format';
+        } else if (errorMessage.includes('Insufficient balance')) {
+          errorMessage = 'SMS service: Insufficient account balance';
+        }
+        
+        smsResult = { success: false, error: errorMessage };
+        }
       }
     }
 

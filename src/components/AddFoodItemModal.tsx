@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { showSuccessAlert } from '@/lib/sweetalert';
+import { UnitType, getAvailableUnits, convertToIngredientBaseUnit } from '@/lib/unitConversion';
 
 interface AddFoodItemModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface PortionPrice {
 interface PortionIngredient {
   ingredientId: string;
   quantity: string;
+  selectedUnit: UnitType;
 }
 
 interface Portion {
@@ -235,7 +237,8 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
     const newPortionPrices = [...values.portionPrices];
     newPortionPrices[portionIndex].ingredients.push({
       ingredientId: "",
-      quantity: ""
+      quantity: "",
+      selectedUnit: "g" as UnitType
     });
     setFieldValue('portionPrices', newPortionPrices);
   };
@@ -254,7 +257,7 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
   const handleIngredientChange = (
     portionIndex: number,
     ingredientIndex: number,
-    field: 'ingredientId' | 'quantity',
+    field: 'ingredientId' | 'quantity' | 'selectedUnit',
     value: string,
     setFieldValue: (field: string, value: any) => void,
     values: FormValues
@@ -281,10 +284,20 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
         ...newPortionPrices[portionIndex].ingredients[ingredientIndex],
         [field]: numericValue
       };
-    } else {
+    } else if (field === 'ingredientId') {
+      // When ingredient changes, set the default unit to the ingredient's base unit
+      const selectedIngredient = ingredients.find(ing => ing.id === value);
+      const defaultUnit = selectedIngredient ? selectedIngredient.unitOfMeasurement as UnitType : "g" as UnitType;
+      
       newPortionPrices[portionIndex].ingredients[ingredientIndex] = {
         ...newPortionPrices[portionIndex].ingredients[ingredientIndex],
-        [field]: value
+        [field]: value,
+        selectedUnit: defaultUnit
+      };
+    } else if (field === 'selectedUnit') {
+      newPortionPrices[portionIndex].ingredients[ingredientIndex] = {
+        ...newPortionPrices[portionIndex].ingredients[ingredientIndex],
+        selectedUnit: value as UnitType
       };
     }
     
@@ -388,10 +401,20 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
           portions: validPortionPrices.map(pp => ({
             portionId: pp.portionId,
             price: parseFloat(pp.price),
-            ingredients: pp.ingredients.filter(ing => ing.ingredientId && ing.quantity).map(ing => ({
-              ingredientId: ing.ingredientId,
-              quantity: parseFloat(ing.quantity)
-            }))
+            ingredients: pp.ingredients.filter(ing => ing.ingredientId && ing.quantity).map(ing => {
+              const selectedIngredient = ingredients.find(ingredient => ingredient.id === ing.ingredientId);
+              const ingredientBaseUnit = selectedIngredient ? selectedIngredient.unitOfMeasurement as UnitType : "g" as UnitType;
+              const quantityInIngredientBaseUnit = convertToIngredientBaseUnit(
+                parseFloat(ing.quantity), 
+                ing.selectedUnit, 
+                ingredientBaseUnit
+              );
+              
+              return {
+                ingredientId: ing.ingredientId,
+                quantity: quantityInIngredientBaseUnit
+              };
+            })
           }))
         }),
       });
@@ -607,50 +630,66 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                     </div>
                     
                     <div className="space-y-2">
-                      {portionPrice.ingredients.map((ingredient, ingredientIndex) => (
-                        <div key={ingredientIndex} className="flex items-center space-x-2 p-2 bg-white rounded border">
-                          <div className="flex-1">
-                            <select
-                              value={ingredient.ingredientId}
-                              onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'ingredientId', e.target.value, setFieldValue, values)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      {portionPrice.ingredients.map((ingredient, ingredientIndex) => {
+                        const selectedIngredient = ingredients.find(ing => ing.id === ingredient.ingredientId);
+                        const availableUnits = selectedIngredient ? getAvailableUnits(selectedIngredient.unitOfMeasurement as UnitType) : [];
+                        
+                        return (
+                          <div key={ingredientIndex} className="flex items-center space-x-2 p-2 bg-white rounded border">
+                            <div className="flex-1">
+                              <select
+                                value={ingredient.ingredientId}
+                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'ingredientId', e.target.value, setFieldValue, values)}
+                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              >
+                                <option value="">Select ingredient</option>
+                                {getAvailableIngredients(portionIndex, ingredientIndex, values).map((ing) => (
+                                  <option key={ing.id} value={ing.id}>
+                                    {ing.name} ({ing.unitOfMeasurement})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={ingredient.quantity}
+                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'quantity', e.target.value, setFieldValue, values)}
+                                min="0"
+                                step="0.01"
+                                placeholder="Quantity"
+                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                            
+                            <div className="w-20">
+                              <select
+                                value={ingredient.selectedUnit}
+                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'selectedUnit', e.target.value, setFieldValue, values)}
+                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled={!selectedIngredient}
+                              >
+                                {availableUnits.map((unit) => (
+                                  <option key={unit} value={unit}>
+                                    {unit}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            
+                            <button
+                              type="button"
+                              onClick={() => removeIngredientFromPortion(portionIndex, ingredientIndex, setFieldValue, values)}
+                              className="text-red-600 hover:text-red-800 p-1"
                             >
-                              <option value="">Select ingredient</option>
-                              {getAvailableIngredients(portionIndex, ingredientIndex, values).map((ing) => (
-                                <option key={ing.id} value={ing.id}>
-                                  {ing.name} ({ing.unitOfMeasurement})
-                                </option>
-                              ))}
-                            </select>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
-                          
-                          <div className="flex-1">
-                            <input
-                              type="number"
-                              value={ingredient.quantity}
-                              onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'quantity', e.target.value, setFieldValue, values)}
-                              min="0"
-                              step="0.01"
-                              placeholder="Quantity"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-                          
-                          <div className="text-xs text-gray-500 w-16">
-                            {getIngredientUnit(ingredient.ingredientId)}
-                          </div>
-                          
-                          <button
-                            type="button"
-                            onClick={() => removeIngredientFromPortion(portionIndex, ingredientIndex, setFieldValue, values)}
-                            className="text-red-600 hover:text-red-800 p-1"
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AddIngredientMaster from "@/components/AddIngredientMaster";
 import EditIngredientMaster from "@/components/EditIngredientMaster";
 import AddStockModal from "@/components/AddStockModal";
+import StockOutModal from "@/components/StockOutModal";
 import { showCustomAlert, showErrorAlert, showConfirmDialog } from '@/lib/sweetalert';
 import Swal from 'sweetalert2';
 
@@ -37,6 +38,7 @@ export default function ManageCategories() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
   const [addingStockTo, setAddingStockTo] = useState<Ingredient | null>(null);
+  const [stockingOutFrom, setStockingOutFrom] = useState<Ingredient | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
@@ -121,6 +123,49 @@ export default function ManageCategories() {
       }
     } else {
       setAddingStockTo(ingredient);
+    }
+  };
+
+  const handleStockOut = async (ingredient: Ingredient) => {
+    // Check if ingredient has stock to stock out
+    if (ingredient.currentStockQuantity <= 0) {
+      showCustomAlert({
+        title: 'No Stock Available',
+        html: `
+          <div class="text-left">
+            <p class="mb-2"><strong>${ingredient.name}</strong> has no stock available to stock out.</p>
+            <p class="text-sm text-gray-600">Current Stock: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}</p>
+          </div>
+        `,
+        icon: 'warning',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    // Show warning if ingredient is already below reorder level
+    if (ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive) {
+      const result = await showCustomAlert({
+        title: 'Low Stock Warning',
+        html: `
+          <div class="text-left">
+            <p class="mb-2"><strong>${ingredient.name}</strong> is currently below its reorder level.</p>
+            <p class="text-sm text-gray-600">Current: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}</p>
+            <p class="text-sm text-gray-600">Reorder Level: ${ingredient.reorderLevel} ${ingredient.unitOfMeasurement}</p>
+            <p class="text-sm text-red-600 font-medium">Stocking out will make this ingredient even more critical.</p>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Continue Stock Out',
+        cancelButtonText: 'Cancel'
+      });
+      
+      if (result.isConfirmed) {
+        setStockingOutFrom(ingredient);
+      }
+    } else {
+      setStockingOutFrom(ingredient);
     }
   };
 
@@ -514,6 +559,18 @@ export default function ManageCategories() {
                             Add Stock
                           </button>
                           <button
+                            onClick={() => handleStockOut(ingredient)}
+                            className={`mr-2 ${
+                              ingredient.currentStockQuantity <= 0
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-orange-600 hover:text-orange-900'
+                            }`}
+                            disabled={ingredient.currentStockQuantity <= 0}
+                            title={ingredient.currentStockQuantity <= 0 ? 'No stock available to stock out' : 'Stock out this ingredient'}
+                          >
+                            Stock Out
+                          </button>
+                          <button
                             onClick={() => handleEditIngredient(ingredient)}
                             className="text-indigo-600 hover:text-indigo-900 mr-2"
                           >
@@ -568,6 +625,16 @@ export default function ManageCategories() {
           onClose={() => setAddingStockTo(null)}
           onStockAdded={handleIngredientAdded}
           ingredient={addingStockTo}
+        />
+      )}
+
+      {/* Stock Out Modal */}
+      {stockingOutFrom && (
+        <StockOutModal
+          isOpen={!!stockingOutFrom}
+          onClose={() => setStockingOutFrom(null)}
+          onStockOut={handleIngredientAdded}
+          ingredient={stockingOutFrom}
         />
       )}
     </div>

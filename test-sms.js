@@ -50,12 +50,15 @@ Thank you for testing!
       message: testMessage,
     });
 
-    if (result.success) {
+    if (result.status === 'success') {
       console.log('✅ SMS sent successfully!');
       console.log('   Response:', result);
+      console.log('   Message ID:', result.data?.uid);
+      console.log('   Cost:', result.data?.cost);
+      console.log('   SMS Count:', result.data?.sms_count);
     } else {
       console.error('❌ SMS failed to send');
-      console.error('   Error:', result.error);
+      console.error('   Error:', result.message || result.error);
     }
   } catch (error) {
     console.error('❌ Error sending SMS:', error.message);
