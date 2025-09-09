@@ -86,24 +86,49 @@ export default function ManageUsers() {
     console.log("Edit user:", userId);
   };
 
-  const handleToggleUserStatus = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/admin/staff/${userId}/toggle-status`, {
-        method: 'PATCH',
-      });
+  const handleDeleteUser = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
 
-      if (response.ok) {
-        // Update local state
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.id === userId ? { ...user, isActive: !user.isActive } : user
-          )
-        );
-      } else {
-        console.error('Failed to toggle user status');
+    const Swal = (await import('sweetalert2')).default;
+    
+    const result = await Swal.fire({
+      title: 'Delete User?',
+      text: `Are you sure you want to delete "${user.name}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/admin/staff/${userId}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
+
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'User has been deleted successfully.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        fetchStaff();
+      } catch (err: any) {
+        await Swal.fire({
+          title: 'Error!',
+          text: err.message || 'Failed to delete user.',
+          icon: 'error',
+        });
       }
-    } catch (error) {
-      console.error('Error toggling user status:', error);
     }
   };
 
@@ -185,9 +210,6 @@ export default function ManageUsers() {
                   Contact
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Last Login
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -221,13 +243,6 @@ export default function ManageUsers() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.phone || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
                   </td>
@@ -240,12 +255,10 @@ export default function ManageUsers() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleToggleUserStatus(user.id)}
-                        className={`${
-                          user.isActive ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
-                        }`}
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900"
                       >
-                        {user.isActive ? 'Deactivate' : 'Activate'}
+                        Delete
                       </button>
                     </div>
                   </td>
