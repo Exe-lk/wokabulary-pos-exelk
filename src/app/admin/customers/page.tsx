@@ -818,7 +818,7 @@ export default function CustomersPage() {
                     {Math.min(currentPage * pagination.limit, pagination.total)}
                   </span>{' '}
                   of <span className="font-medium">{pagination.total}</span> results
-                </p>
+       </p>
               </div>
               
               <div>

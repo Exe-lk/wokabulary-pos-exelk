@@ -124,56 +124,6 @@ export default function ManageCategories() {
     }
   };
 
-  const handleToggleStatus = async (ingredientId: string) => {
-    try {
-      const ingredient = ingredients.find(c => c.id === ingredientId);
-      if (!ingredient) return;
-
-      const response = await fetch(`/api/admin/ingredients/${ingredientId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: !ingredient.isActive,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Show detailed error message for constraint violations
-        if (errorData.affectedItems) {
-          const action = ingredient.isActive ? 'disable' : 'enable';
-          showCustomAlert({
-            title: `Cannot ${action.charAt(0).toUpperCase() + action.slice(1)} Ingredient`,
-            html: `
-              <div class="text-left">
-                <p class="mb-2">Cannot ${action} ingredient <strong>"${ingredient.name}"</strong>.</p>
-                <p class="text-sm text-gray-600 mb-2">Affected items: ${errorData.affectedItems.join(', ')}</p>
-                <p class="text-sm text-gray-600">${errorData.error}</p>
-              </div>
-            `,
-            icon: 'error',
-            confirmButtonText: 'OK'
-          });
-        } else {
-          showErrorAlert('Error', errorData.error || 'Failed to update ingredient status');
-        }
-        
-        throw new Error(errorData.error || 'Failed to update ingredient status');
-      }
-
-      // Update local state
-      setIngredients(prevIngredients =>
-        prevIngredients.map(ing =>
-          ing.id === ingredientId ? { ...ing, isActive: !ing.isActive } : ing
-        )
-      );
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
 
   const handleDeleteIngredient = async (ingredientId: string) => {
     const ingredient = ingredients.find(c => c.id === ingredientId);
@@ -466,9 +416,6 @@ export default function ManageCategories() {
                       Reorder Level
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -555,15 +502,6 @@ export default function ManageCategories() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          ingredient.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {ingredient.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(ingredient.createdAt)}
                       </td>
@@ -580,16 +518,6 @@ export default function ManageCategories() {
                             className="text-indigo-600 hover:text-indigo-900 mr-2"
                           >
                             Edit
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(ingredient.id)}
-                            className={`mr-2 ${
-                              ingredient.isActive
-                                ? 'text-red-600 hover:text-red-900'
-                                : 'text-green-600 hover:text-green-900'
-                            }`}
-                          >
-                            {ingredient.isActive ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
                             onClick={() => handleDeleteIngredient(ingredient.id)}
