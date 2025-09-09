@@ -131,49 +131,49 @@ export default function ManageItems() {
     setSelectedItem(null);
   };
 
-  const handleToggleAvailability = async (itemId: string) => {
-    try {
-      const item = items.find(i => i.id === itemId);
-      if (!item) return;
+  const handleDeleteItem = async (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
 
-      const response = await fetch(`/api/admin/food-items/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: !item.isActive,
-        }),
-      });
+    const Swal = (await import('sweetalert2')).default;
+    
+    const result = await Swal.fire({
+      title: 'Delete Item?',
+      text: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel',
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Show detailed error message for constraint violations
-        if (errorData.affectedOrders) {
-          const action = item.isActive ? 'disable' : 'enable';
-          const orderList = errorData.affectedOrders
-            .map((order: any) => `Order #${order.orderId} (Table ${order.tableNumber}, Status: ${order.status})`)
-            .join('\n');
-          showErrorAlert(
-            `Cannot ${action} food item "${item.name}"`,
-            `Affected incomplete orders:\n${orderList}\n\n${errorData.error}`
-          );
-        } else {
-          showErrorAlert('Error', errorData.error || 'Failed to update item availability');
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/admin/food-items/${itemId}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete item');
         }
-        
-        throw new Error(errorData.error || 'Failed to update item availability');
-      }
 
-      // Update local state
-      setItems(prevItems =>
-        prevItems.map(item =>
-          item.id === itemId ? { ...item, isActive: !item.isActive } : item
-        )
-      );
-    } catch (err: any) {
-      setError(err.message);
+        await Swal.fire({
+          title: 'Deleted!',
+          text: 'Item has been deleted successfully.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        fetchItems();
+      } catch (err: any) {
+        await Swal.fire({
+          title: 'Error!',
+          text: err.message || 'Failed to delete item.',
+          icon: 'error',
+        });
+      }
     }
   };
 
@@ -258,7 +258,6 @@ export default function ManageItems() {
                  <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Category</th>
                  <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/3">Portions, Prices & Ingredients</th>
                  <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Price Range</th>
-                 <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/12">Status</th>
                  <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Actions</th>
                </tr>
             </thead>
@@ -325,16 +324,6 @@ export default function ManageItems() {
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                        }`}
-                    >
-                      {item.isActive ? "Available" : "Unavailable"}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditItem(item.id)}
@@ -343,23 +332,10 @@ export default function ManageItems() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleToggleAvailability(item.id)}
-                        className={`flex items-center gap-1 text-sm font-medium ${item.isActive
-                            ? "text-red-600 hover:text-red-800"
-                            : "text-green-600 hover:text-green-800"
-                          }`}
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
-                        {item.isActive ? (
-                          <>
-                            <FaTimesCircle className="text-red-600" />
-                            Disable
-                          </>
-                        ) : (
-                          <>
-                            <FaCheckCircle className="text-green-600" />
-                            Enable
-                          </>
-                        )}
+                        Delete
                       </button>
                     </div>
                   </td>

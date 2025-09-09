@@ -54,48 +54,6 @@ export default function PortionsPage() {
     fetchPortions();
   };
 
-  const handleToggleStatus = async (portionId: string) => {
-    try {
-      const portion = portions.find(p => p.id === portionId);
-      if (!portion) return;
-
-      const response = await fetch(`/api/admin/portions/${portionId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: !portion.isActive,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Show detailed error message for constraint violations
-        if (errorData.affectedItems) {
-          const action = portion.isActive ? 'disable' : 'enable';
-          showErrorAlert(
-            `Cannot ${action} portion "${portion.name}"`,
-            `Affected food items: ${errorData.affectedItems.join(', ')}\n\n${errorData.error}`
-          );
-        } else {
-          showErrorAlert('Error', errorData.error || 'Failed to update portion status');
-        }
-        
-        throw new Error(errorData.error || 'Failed to update portion status');
-      }
-
-      // Update local state
-      setPortions(prevPortions =>
-        prevPortions.map(port =>
-          port.id === portionId ? { ...port, isActive: !port.isActive } : port
-        )
-      );
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
 
   const handleDeletePortion = async (portionId: string) => {
     const portion = portions.find(p => p.id === portionId);
@@ -277,16 +235,6 @@ export default function PortionsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => handleToggleStatus(portion.id)}
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                              portion.isActive
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : 'bg-green-100 text-green-800 hover:bg-green-200'
-                            }`}
-                          >
-                            {portion.isActive ? 'Disable' : 'Enable'}
-                          </button>
                           <button
                             onClick={() => handleDeletePortion(portion.id)}
                             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 transition-colors"
