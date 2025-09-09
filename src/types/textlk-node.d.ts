@@ -7,9 +7,18 @@ declare module 'textlk-node' {
   }
 
   export interface SMSResponse {
-    success: boolean;
+    status: 'success' | 'error';
     message?: string;
     error?: string;
+    data?: {
+      uid: string;
+      to: string;
+      from: string;
+      message: string;
+      status: string;
+      cost: string;
+      sms_count: number;
+    };
     [key: string]: any;
   }
 

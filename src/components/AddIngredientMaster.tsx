@@ -95,19 +95,27 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
           </div>
 
           <div>
-            <label htmlFor="unitOfMeasurement" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="unitOfMeasurement"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Unit of Measurement *
             </label>
-            <input
-              type="text"
+            <select
               id="unitOfMeasurement"
               value={unitOfMeasurement}
               onChange={(e) => setUnitOfMeasurement(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., kg, g, ml, pcs, liters"
-            />
+            >
+              <option value="">-- Select Unit --</option>
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+            </select>
           </div>
+
 
           <div>
             <label htmlFor="reorderLevel" className="block text-sm font-medium text-gray-700 mb-1">

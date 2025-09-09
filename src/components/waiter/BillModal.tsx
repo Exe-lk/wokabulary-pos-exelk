@@ -281,7 +281,17 @@ export default function BillModal({ isOpen, onClose, order, onBillSent }: BillMo
           setSmsStatus('success');
         } else {
           setSmsStatus('error');
-          console.error('SMS failed:', result.smsResult.error);
+          const smsError = result.smsResult.error || 'Unknown SMS error';
+          console.error('SMS failed:', smsError);
+          
+          // Show specific error message for SMS failure
+          if (smsError.includes('TEXTLK_API_TOKEN') || smsError.includes('not configured')) {
+            setError('SMS configuration error: Please check Text.lk API token configuration');
+          } else if (smsError.includes('Invalid phone number')) {
+            setError('Invalid phone number format. Please use format: 0712345678 or +94712345678');
+          } else {
+            setError(`SMS failed: ${smsError}. Email was sent successfully.`);
+          }
         }
       }
 

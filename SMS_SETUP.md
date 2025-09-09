@@ -109,15 +109,25 @@ Restaurant Team
 1. **"TEXTLK_API_TOKEN is not set"**
    - Check your `.env.local` file
    - Ensure the token is correctly copied from Text.lk dashboard
+   - Copy `.env.example` to `.env.local` and fill in your actual values
 
 2. **"SMS failed to send"**
    - Verify your API token is valid
    - Check your Text.lk account balance
    - Ensure phone number format is correct
+   - Check console logs for detailed error messages
 
 3. **"Invalid phone number"**
    - Use Sri Lankan phone number format
    - Supported formats: `0712345678`, `+94712345678`, `94712345678`
+
+4. **"SMS configuration error"**
+   - Ensure both `TEXTLK_API_TOKEN` and `TEXTLK_SENDER_ID` are set
+   - Restart your development server after updating environment variables
+
+5. **"SMS failed: undefined"**
+   - This error has been fixed with improved error handling
+   - You should now see specific error messages instead of "undefined"
 
 ### Testing
 
