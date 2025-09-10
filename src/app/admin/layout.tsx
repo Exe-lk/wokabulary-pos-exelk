@@ -107,7 +107,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </svg>
               </button>
               <div className="hidden lg:block">
-                <h1 className="text-lg font-semibold text-gray-900">
+              {/*  <h1 className="text-lg font-semibold text-gray-900">
                   {pathname === '/admin/dashboard' && 'Dashboard'}
                   {pathname === '/admin/users' && 'User Management'}
                   {pathname === '/admin/items' && 'Item Management'}
@@ -120,7 +120,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   {pathname === '/admin/reports' && 'Reports & Analytics'}
                   {pathname === '/admin/settings' && 'System Settings'}
                   {pathname === '/admin/ingredientmaster' && 'Ingredient Master'}
-                </h1>
+                </h1> */}
                 <p className="text-sm text-gray-600">Wokabulary Restaurant Management System</p>
               </div>
             </div>

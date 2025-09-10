@@ -155,19 +155,70 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
           errors.portionPrices = 'Duplicate portions are not allowed';
         }
 
-        // Validate individual portion prices
+        // Validate individual portion prices and ingredients
         const portionErrors: any[] = [];
         validPortionPrices.forEach((pp, index) => {
+          const portionError: any = {};
+          
+          // Price validation
           const price = parseFloat(pp.price);
           if (isNaN(price) || price <= 0) {
-            portionErrors[index] = 'Price must be a valid positive number';
+            portionError.price = 'Price must be a valid positive number';
           } else {
             // Check if price has more than 2 decimal places
             const priceString = pp.price.toString();
             const parts = priceString.split('.');
             if (parts.length > 1 && parts[1].length > 2) {
-              portionErrors[index] = 'Price can only have up to 2 decimal places';
+              portionError.price = 'Price can only have up to 2 decimal places';
             }
+          }
+
+          // Portion selection validation
+          if (!pp.portionId) {
+            portionError.portion = 'Please select a portion';
+          }
+
+          // Ingredients validation - each portion must have at least one ingredient
+          if (!pp.ingredients || pp.ingredients.length === 0) {
+            portionError.ingredients = 'At least one ingredient is required for each portion';
+          } else {
+            // Validate each ingredient
+            const ingredientErrors: any[] = [];
+            pp.ingredients.forEach((ingredient, ingIndex) => {
+              const ingError: any = {};
+              
+              if (!ingredient.ingredientId) {
+                ingError.ingredientId = 'Please select an ingredient';
+              }
+              
+              if (!ingredient.quantity || ingredient.quantity.trim() === '') {
+                ingError.quantity = 'Quantity is required';
+              } else {
+                const quantity = parseFloat(ingredient.quantity);
+                if (isNaN(quantity) || quantity <= 0) {
+                  ingError.quantity = 'Quantity must be a valid positive number';
+                } else {
+                  // Check if quantity has more than 2 decimal places
+                  const quantityString = ingredient.quantity.toString();
+                  const qtyParts = quantityString.split('.');
+                  if (qtyParts.length > 1 && qtyParts[1].length > 2) {
+                    ingError.quantity = 'Quantity can only have up to 2 decimal places';
+                  }
+                }
+              }
+              
+              if (Object.keys(ingError).length > 0) {
+                ingredientErrors[ingIndex] = ingError;
+              }
+            });
+            
+            if (ingredientErrors.some(error => error)) {
+              portionError.ingredients = ingredientErrors;
+            }
+          }
+
+          if (Object.keys(portionError).length > 0) {
+            portionErrors[index] = portionError;
           }
         });
 
@@ -586,16 +637,19 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                         onChange={(e) => handlePortionPriceChange(portionIndex, 'portionId', e.target.value, setFieldValue, values)}
                         onBlur={handleBlur}
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] ? 'border-red-500' : 'border-gray-300'
+                          errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'portion' in errors.portionPrices[portionIndex] ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
                         <option value="">Select portion</option>
                         {getAvailablePortions(portionIndex, values).map((portion) => (
                           <option key={portion.id} value={portion.id}>
-                            {portion.name} {portion.description && `- ${portion.description}`}
+                            {portion.name} {portion.description && ``}
                           </option>
                         ))}
                       </select>
+                      {errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'portion' in errors.portionPrices[portionIndex] && (
+                        <div className="text-red-500 text-xs mt-1">{(errors.portionPrices[portionIndex] as any).portion}</div>
+                      )}
                     </div>
                     
                     <div>
@@ -610,9 +664,12 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                         pattern="[0-9]*\.?[0-9]{0,2}"
                         title="Please enter a valid price with up to 2 decimal places"
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] ? 'border-red-500' : 'border-gray-300'
+                          errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'price' in errors.portionPrices[portionIndex] ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
+                      {errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'price' in errors.portionPrices[portionIndex] && (
+                        <div className="text-red-500 text-xs mt-1">{(errors.portionPrices[portionIndex] as any).price}</div>
+                      )}
                     </div>
                   </div>
 
@@ -629,64 +686,89 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                       </button>
                     </div>
                     
+                    {/* Ingredients validation error */}
+                    {errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'ingredients' in errors.portionPrices[portionIndex] && typeof (errors.portionPrices[portionIndex] as any).ingredients === 'string' && (
+                      <div className="text-red-500 text-xs mb-2">{(errors.portionPrices[portionIndex] as any).ingredients}</div>
+                    )}
+                    
                     <div className="space-y-2">
                       {portionPrice.ingredients.map((ingredient, ingredientIndex) => {
                         const selectedIngredient = ingredients.find(ing => ing.id === ingredient.ingredientId);
                         const availableUnits = selectedIngredient ? getAvailableUnits(selectedIngredient.unitOfMeasurement as UnitType) : [];
                         
+                        const ingredientErrors = errors.portionPrices && Array.isArray(errors.portionPrices) && errors.portionPrices[portionIndex] && typeof errors.portionPrices[portionIndex] === 'object' && 'ingredients' in errors.portionPrices[portionIndex] && Array.isArray((errors.portionPrices[portionIndex] as any).ingredients) ? (errors.portionPrices[portionIndex] as any).ingredients[ingredientIndex] : null;
+                        
                         return (
-                          <div key={ingredientIndex} className="flex items-center space-x-2 p-2 bg-white rounded border">
-                            <div className="flex-1">
-                              <select
-                                value={ingredient.ingredientId}
-                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'ingredientId', e.target.value, setFieldValue, values)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          <div key={ingredientIndex} className="space-y-1">
+                            <div className="flex items-center space-x-2 p-2 bg-white rounded border">
+                              <div className="flex-1">
+                                <select
+                                  value={ingredient.ingredientId}
+                                  onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'ingredientId', e.target.value, setFieldValue, values)}
+                                  className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    ingredientErrors?.ingredientId ? 'border-red-500' : 'border-gray-300'
+                                  }`}
+                                >
+                                  <option value="">Select ingredient</option>
+                                  {getAvailableIngredients(portionIndex, ingredientIndex, values).map((ing) => (
+                                    <option key={ing.id} value={ing.id}>
+                                      {ing.name} ({ing.unitOfMeasurement})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              
+                              <div className="flex-1">
+                                <input
+                                  type="number"
+                                  value={ingredient.quantity}
+                                  onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'quantity', e.target.value, setFieldValue, values)}
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="Quantity"
+                                  className={`w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                    ingredientErrors?.quantity ? 'border-red-500' : 'border-gray-300'
+                                  }`}
+                                />
+                              </div>
+                              
+                              <div className="w-20">
+                                <select
+                                  value={ingredient.selectedUnit}
+                                  onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'selectedUnit', e.target.value, setFieldValue, values)}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  disabled={!selectedIngredient}
+                                >
+                                  {availableUnits.map((unit) => (
+                                    <option key={unit} value={unit}>
+                                      {unit}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              
+                              <button
+                                type="button"
+                                onClick={() => removeIngredientFromPortion(portionIndex, ingredientIndex, setFieldValue, values)}
+                                className="text-red-600 hover:text-red-800 p-1"
                               >
-                                <option value="">Select ingredient</option>
-                                {getAvailableIngredients(portionIndex, ingredientIndex, values).map((ing) => (
-                                  <option key={ing.id} value={ing.id}>
-                                    {ing.name} ({ing.unitOfMeasurement})
-                                  </option>
-                                ))}
-                              </select>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </div>
                             
-                            <div className="flex-1">
-                              <input
-                                type="number"
-                                value={ingredient.quantity}
-                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'quantity', e.target.value, setFieldValue, values)}
-                                min="0"
-                                step="0.01"
-                                placeholder="Quantity"
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              />
-                            </div>
-                            
-                            <div className="w-20">
-                              <select
-                                value={ingredient.selectedUnit}
-                                onChange={(e) => handleIngredientChange(portionIndex, ingredientIndex, 'selectedUnit', e.target.value, setFieldValue, values)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                disabled={!selectedIngredient}
-                              >
-                                {availableUnits.map((unit) => (
-                                  <option key={unit} value={unit}>
-                                    {unit}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            
-                            <button
-                              type="button"
-                              onClick={() => removeIngredientFromPortion(portionIndex, ingredientIndex, setFieldValue, values)}
-                              className="text-red-600 hover:text-red-800 p-1"
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                            {/* Individual ingredient validation errors */}
+                            {ingredientErrors && (
+                              <div className="ml-2 space-y-1">
+                                {ingredientErrors.ingredientId && (
+                                  <div className="text-red-500 text-xs">{ingredientErrors.ingredientId}</div>
+                                )}
+                                {ingredientErrors.quantity && (
+                                  <div className="text-red-500 text-xs">{ingredientErrors.quantity}</div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -705,7 +787,16 @@ export default function AddFoodItemModal({ isOpen, onClose, onFoodItemAdded }: A
                 {errors.portionPrices && Array.isArray(errors.portionPrices) && (
                   <div className="space-y-1 mt-1">
                     {errors.portionPrices.map((error, index) => 
-                      error && typeof error === 'string' ? <div key={index} className="text-red-500 text-sm">Portion {index + 1}: {error}</div> : null
+                      error && typeof error === 'string' ? (
+                        <div key={index} className="text-red-500 text-sm">Portion {index + 1}: {error}</div>
+                      ) : error && typeof error === 'object' ? (
+                        <div key={index} className="text-red-500 text-sm">
+                          Portion {index + 1}: 
+                          {'portion' in error && <div className="ml-2">- {(error as any).portion}</div>}
+                          {'price' in error && <div className="ml-2">- {(error as any).price}</div>}
+                          {'ingredients' in error && typeof (error as any).ingredients === 'string' && <div className="ml-2">- {(error as any).ingredients}</div>}
+                        </div>
+                      ) : null
                     )}
                   </div>
                 )}

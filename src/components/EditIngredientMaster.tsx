@@ -124,6 +124,7 @@ export default function EditIngredientMaster({ isOpen, onClose, onIngredientUpda
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., kg, g, ml, pcs, liters"
+              disabled
             />
           </div>
 
@@ -135,8 +136,12 @@ export default function EditIngredientMaster({ isOpen, onClose, onIngredientUpda
               type="number"
               id="reorderLevel"
               value={reorderLevel}
-              onChange={(e) => setReorderLevel(e.target.value)}
-              min="0"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setReorderLevel(value);
+                }
+              }} min="0"
               step="0.01"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., 10.5"

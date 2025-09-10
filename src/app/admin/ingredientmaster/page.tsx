@@ -117,7 +117,7 @@ export default function ManageCategories() {
         confirmButtonText: 'Continue Adding Stock',
         cancelButtonText: 'Cancel'
       });
-      
+
       if (result.isConfirmed) {
         setAddingStockTo(ingredient);
       }
@@ -160,7 +160,7 @@ export default function ManageCategories() {
         confirmButtonText: 'Continue Stock Out',
         cancelButtonText: 'Cancel'
       });
-      
+
       if (result.isConfirmed) {
         setStockingOutFrom(ingredient);
       }
@@ -179,10 +179,9 @@ export default function ManageCategories() {
       const result = await Swal.fire({
         title: 'Delete Low Stock Ingredient?',
         html: `
-          <div class="text-left">
+          <div class="text-center">
             <p class="mb-2"><strong>${ingredient.name}</strong> is currently below its reorder level.</p>
-            <p class="text-sm text-gray-600 mb-3">Current: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}</p>
-            <p class="text-sm text-gray-600 mb-3">Reorder Level: ${ingredient.reorderLevel} ${ingredient.unitOfMeasurement}</p>
+            <p class="text-sm text-gray-600 mb-3">Current: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}    Reorder Level: ${ingredient.reorderLevel} ${ingredient.unitOfMeasurement}</p>
             <p class="text-red-600 font-medium">Are you sure you want to delete this ingredient?</p>
           </div>
         `,
@@ -199,7 +198,7 @@ export default function ManageCategories() {
           htmlContainer: 'text-red-700'
         }
       });
-      
+
       if (!result.isConfirmed) {
         return;
       }
@@ -211,7 +210,7 @@ export default function ManageCategories() {
         'Yes, Delete',
         'Cancel'
       );
-      
+
       if (!result.isConfirmed) {
         return;
       }
@@ -224,7 +223,7 @@ export default function ManageCategories() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
           showCustomAlert({
@@ -242,7 +241,7 @@ export default function ManageCategories() {
         } else {
           showErrorAlert('Error', errorData.error || 'Failed to delete ingredient');
         }
-        
+
         throw new Error(errorData.error || 'Failed to delete ingredient');
       }
 
@@ -261,8 +260,8 @@ export default function ManageCategories() {
 
   // Check for low stock alerts
   const getLowStockIngredients = () => {
-    return ingredients.filter(ingredient => 
-      ingredient.isActive && 
+    return ingredients.filter(ingredient =>
+      ingredient.isActive &&
       ingredient.currentStockQuantity < ingredient.reorderLevel
     );
   };
@@ -272,10 +271,10 @@ export default function ManageCategories() {
   // Show alert for low stock items when data is loaded
   useEffect(() => {
     if (!isLoading && lowStockIngredients.length > 0) {
-      const ingredientList = lowStockIngredients.map(ing => 
+      const ingredientList = lowStockIngredients.map(ing =>
         `<li><strong>${ing.name}</strong>: ${ing.currentStockQuantity} ${ing.unitOfMeasurement} (Reorder level: ${ing.reorderLevel} ${ing.unitOfMeasurement})</li>`
       ).join('');
-      
+
       showCustomAlert({
         title: 'Low Stock Alert!',
         html: `
@@ -314,7 +313,7 @@ export default function ManageCategories() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Manage Food Ingredients</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Ingredient Management</h1>
               <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -355,7 +354,7 @@ export default function ManageCategories() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-full">
@@ -385,23 +384,6 @@ export default function ManageCategories() {
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-full">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Low Stock</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {ingredients.filter(ing => ing.isActive && ing.currentStockQuantity <= ing.reorderLevel * 1.2 && ing.currentStockQuantity > ing.reorderLevel).length}
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
             <div className="flex items-center">
               <div className="p-2 bg-red-100 rounded-full">
@@ -410,7 +392,7 @@ export default function ManageCategories() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Critical Stock</p>
+                <p className="text-sm font-medium text-gray-600">Low Stock</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {ingredients.filter(ing => ing.isActive && ing.currentStockQuantity < ing.reorderLevel).length}
                 </p>
@@ -419,40 +401,40 @@ export default function ManageCategories() {
           </div>
         </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
 
-          {/* Low Stock Alert */}
-          {lowStockIngredients.length > 0 && (
-            <div className="mb-4 bg-orange-50 border border-orange-200 rounded-md p-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-orange-800">
-                    Low Stock Alert ({lowStockIngredients.length} ingredient{lowStockIngredients.length > 1 ? 's' : ''})
-                  </h3>
-                  <div className="mt-2 text-sm text-orange-700">
-                    <ul className="list-disc list-inside space-y-1">
-                      {lowStockIngredients.map((ingredient) => (
-                        <li key={ingredient.id}>
-                          <strong>{ingredient.name}</strong>: {ingredient.currentStockQuantity} {ingredient.unitOfMeasurement} 
-                          (Reorder level: {ingredient.reorderLevel} {ingredient.unitOfMeasurement})
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+        {/* Low Stock Alert */}
+        {lowStockIngredients.length > 0 && (
+          <div className="mb-4 bg-orange-50 border border-orange-200 rounded-md p-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-orange-800">
+                  Low Stock Alert ({lowStockIngredients.length} ingredient{lowStockIngredients.length > 1 ? 's' : ''})
+                </h3>
+                <div className="mt-2 text-sm text-orange-700">
+                  <ul className="list-disc list-inside space-y-1">
+                    {lowStockIngredients.map((ingredient) => (
+                      <li key={ingredient.id}>
+                        <strong>{ingredient.name}</strong>: {ingredient.currentStockQuantity} {ingredient.unitOfMeasurement}
+                        (Reorder level: {ingredient.reorderLevel} {ingredient.unitOfMeasurement})
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {/* Ingredients Table */}
@@ -474,9 +456,6 @@ export default function ManageCategories() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Reorder Level
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -502,13 +481,12 @@ export default function ManageCategories() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm font-medium flex items-center ${
-                        ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive
-                          ? 'text-red-600'
-                          : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2 && ingredient.isActive
+                      <div className={`text-sm font-medium flex items-center ${ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive
+                        ? 'text-red-600'
+                        : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2 && ingredient.isActive
                           ? 'text-orange-600'
                           : 'text-gray-900'
-                      }`}>
+                        }`}>
                         {ingredient.currentStockQuantity < ingredient.reorderLevel && ingredient.isActive && (
                           <svg className="w-4 h-4 mr-1 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -520,7 +498,7 @@ export default function ManageCategories() {
                           </svg>
                         )}
                         <span className="font-semibold">
-                          {ingredient.currentStockQuantity !== undefined && ingredient.currentStockQuantity !== null 
+                          {ingredient.currentStockQuantity !== undefined && ingredient.currentStockQuantity !== null
                             ? ingredient.currentStockQuantity
                             : 0
                           }
@@ -531,14 +509,13 @@ export default function ManageCategories() {
                       </div>
                       {/* Stock Level Progress Bar */}
                       <div className="mt-2 w-full bg-gray-200 rounded-full h-2 relative group">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            ingredient.currentStockQuantity < ingredient.reorderLevel
-                              ? 'bg-red-500'
-                              : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${ingredient.currentStockQuantity < ingredient.reorderLevel
+                            ? 'bg-red-500'
+                            : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.2
                               ? 'bg-orange-500'
                               : 'bg-green-500'
-                          }`}
+                            }`}
                           style={{
                             width: `${Math.min(100, (ingredient.currentStockQuantity / Math.max(ingredient.reorderLevel * 2, 1)) * 100)}%`
                           }}
@@ -562,38 +539,40 @@ export default function ManageCategories() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(ingredient.createdAt)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleAddStock(ingredient)}
-                          className="text-green-600 hover:text-green-900 mr-2"
+                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         >
                           Add Stock
                         </button>
                         <button
                           onClick={() => handleStockOut(ingredient)}
-                          className={`mr-2 ${
-                            ingredient.currentStockQuantity <= 0
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-orange-600 hover:text-orange-900'
-                          }`}
+                          className={`inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md transition-colors
+    ${ingredient.currentStockQuantity <= 0
+                              ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                              : 'text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
+                            }`}
                           disabled={ingredient.currentStockQuantity <= 0}
-                          title={ingredient.currentStockQuantity <= 0 ? 'No stock available to stock out' : 'Stock out this ingredient'}
+                          title={
+                            ingredient.currentStockQuantity <= 0
+                              ? 'No stock available to stock out'
+                              : 'Stock out this ingredient'
+                          }
                         >
                           Stock Out
                         </button>
+
                         <button
                           onClick={() => handleEditIngredient(ingredient)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-2"
+                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteIngredient(ingredient.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                         >
                           Delete
                         </button>

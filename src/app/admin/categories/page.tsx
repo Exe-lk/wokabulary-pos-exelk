@@ -102,7 +102,7 @@ export default function ManageCategories() {
       'Delete',
       'Cancel'
     );
-    
+
     if (!result.isConfirmed) {
       return;
     }
@@ -114,7 +114,7 @@ export default function ManageCategories() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        
+
         // Show detailed error message for constraint violations
         if (errorData.affectedItems) {
           showErrorAlert(
@@ -124,7 +124,7 @@ export default function ManageCategories() {
         } else {
           showErrorAlert('Error', errorData.error || 'Failed to delete category');
         }
-        
+
         throw new Error(errorData.error || 'Failed to delete category');
       }
 
@@ -149,7 +149,7 @@ export default function ManageCategories() {
   //   );
   // }
 
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function ManageCategories() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Manage Food Categories</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Category Management</h1>
               <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food categories</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -232,9 +232,6 @@ export default function ManageCategories() {
                     Description
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -252,20 +249,17 @@ export default function ManageCategories() {
                         {category.description || 'No description'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(category.createdAt)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEditCategory(category)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
+                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"                      
+                            >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteCategory(category.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                         >
                           Delete
                         </button>

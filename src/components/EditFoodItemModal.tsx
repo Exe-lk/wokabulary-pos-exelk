@@ -354,10 +354,52 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
         throw new Error('At least one portion and price is required');
       }
 
-      // Validate portion prices
-      const validPortionPrices = portionPrices.filter(pp => pp.portionId && pp.price);
+      // Enhanced validation for portions, prices, and ingredients
+      for (let i = 0; i < portionPrices.length; i++) {
+        const portion = portionPrices[i];
+        
+        // Validate portion selection
+        if (!portion.portionId) {
+          throw new Error(`Portion ${i + 1}: Please select a portion`);
+        }
+        
+        // Validate price
+        if (!portion.price || portion.price.trim() === '') {
+          throw new Error(`Portion ${i + 1}: Price is required`);
+        }
+        
+        const priceValue = parseFloat(portion.price);
+        if (isNaN(priceValue) || priceValue <= 0) {
+          throw new Error(`Portion ${i + 1}: Please enter a valid price greater than 0`);
+        }
+        
+        // Validate ingredients for this portion
+        for (let j = 0; j < portion.ingredients.length; j++) {
+          const ingredient = portion.ingredients[j];
+          
+          if (!ingredient.ingredientId) {
+            throw new Error(`Portion ${i + 1}, Ingredient ${j + 1}: Please select an ingredient`);
+          }
+          
+          if (!ingredient.quantity || ingredient.quantity.trim() === '') {
+            throw new Error(`Portion ${i + 1}, Ingredient ${j + 1}: Quantity is required`);
+          }
+          
+          const quantityValue = parseFloat(ingredient.quantity);
+          if (isNaN(quantityValue) || quantityValue <= 0) {
+            throw new Error(`Portion ${i + 1}, Ingredient ${j + 1}: Please enter a valid quantity greater than 0`);
+          }
+          
+          if (!ingredient.selectedUnit) {
+            throw new Error(`Portion ${i + 1}, Ingredient ${j + 1}: Please select a unit`);
+          }
+        }
+      }
+
+      // Validate that we have at least one valid portion with price
+      const validPortionPrices = portionPrices.filter(pp => pp.portionId && pp.price && parseFloat(pp.price) > 0);
       if (validPortionPrices.length === 0) {
-        throw new Error('At least one valid portion and price is required');
+        throw new Error('At least one valid portion with price is required');
       }
 
       // Upload image if selected

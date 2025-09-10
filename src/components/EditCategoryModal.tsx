@@ -121,7 +121,7 @@ export default function EditCategoryModal({ isOpen, onClose, onCategoryUpdated, 
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
