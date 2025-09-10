@@ -166,7 +166,7 @@ export default function ManageItems() {
           showConfirmButton: false,
         });
 
-        fetchItems();
+        fetchFoodItems();
       } catch (err: any) {
         await Swal.fire({
           title: 'Error!',
@@ -213,35 +213,52 @@ export default function ManageItems() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Food Items</h1>
-          <p className="text-gray-600 mt-1">Add, edit, and manage your menu items</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Manage Food Items</h1>
+              <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your menu items</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add Food Item</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Add Food Item</span>
-        </button>
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
-        <div className="max-w-md">
-          <input
-            type="text"
-            placeholder="Search by name, category, portion, or price..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, category, portion, or price..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
@@ -398,18 +415,19 @@ export default function ManageItems() {
         </div>
       </div>
 
-      <AddFoodItemModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onFoodItemAdded={handleFoodItemAdded}
-      />
+        <AddFoodItemModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onFoodItemAdded={handleFoodItemAdded}
+        />
 
-      <EditFoodItemModal
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        foodItem={selectedItem}
-        onFoodItemUpdated={handleFoodItemUpdated}
-      />
+        <EditFoodItemModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          foodItem={selectedItem}
+          onFoodItemUpdated={handleFoodItemUpdated}
+        />
+      </div>
     </div>
   );
 } 
