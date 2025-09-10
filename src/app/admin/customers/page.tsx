@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
+import EditCustomerModal from '@/components/EditCustomerModal';
 
 interface OrderItem {
   id: string;
@@ -92,6 +93,7 @@ export default function CustomersPage() {
   });
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     // Check if admin is logged in
@@ -151,8 +153,14 @@ export default function CustomersPage() {
   };
 
   const handleEditCustomer = (customerId: string) => {
-    // TODO: Implement edit customer functionality
-    console.log("Edit customer:", customerId);
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      setEditingCustomer(customer);
+    }
+  };
+
+  const handleCustomerUpdated = () => {
+    fetchCustomers();
   };
 
   const handleDeleteCustomer = async (customerId: string) => {
@@ -876,6 +884,14 @@ export default function CustomersPage() {
           )}
         </div>
       </div>
+
+      {/* Edit Customer Modal */}
+      <EditCustomerModal
+        isOpen={!!editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        customer={editingCustomer}
+        onCustomerUpdated={handleCustomerUpdated}
+      />
     </div>
   );
 }
