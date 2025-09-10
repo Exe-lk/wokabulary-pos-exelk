@@ -109,32 +109,40 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">-- Select Unit --</option>
-              <option value="g">g</option>
-              <option value="kg">kg</option>
-              <option value="ml">ml</option>
-              <option value="L">L</option>
+              <option value="g">g - Gram</option>
+              <option value="kg">kg - Kilogram</option>
+              <option value="ml">ml - Milliliter</option>
+              <option value="L">l - Liter</option>
             </select>
           </div>
 
-
           <div>
-            <label htmlFor="reorderLevel" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="reorderLevel"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Reorder Level
             </label>
             <input
               type="number"
               id="reorderLevel"
               value={reorderLevel}
-              onChange={(e) => setReorderLevel(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                  setReorderLevel(value);
+                }
+              }}
               min="0"
               step="0.01"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g., 10.5"
+              placeholder="e.g., 10.50"
             />
             <p className="text-xs text-gray-500 mt-1">
               Alert will be shown when current stock falls below this level
             </p>
           </div>
+
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">

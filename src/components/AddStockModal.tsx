@@ -56,12 +56,12 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
       setQuantity("");
       onStockAdded();
       onClose();
-      
+
       // Check if this brings the ingredient above reorder level
       const newStockLevel = ingredient.currentStockQuantity + quantityNum;
       const wasBelowReorderLevel = ingredient.currentStockQuantity < ingredient.reorderLevel;
       const isNowAboveReorderLevel = newStockLevel >= ingredient.reorderLevel;
-      
+
       if (wasBelowReorderLevel && isNowAboveReorderLevel) {
         // Special alert for bringing stock above reorder level
         showCustomAlert({
@@ -128,16 +128,18 @@ export default function AddStockModal({ isOpen, onClose, onStockAdded, ingredien
                 type="number"
                 id="quantity"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
                 required
                 step="0.01"
                 min="0.01"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setQuantity(value);
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder={`Enter quantity in ${ingredient.unitOfMeasurement}`}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 text-sm">{ingredient.unitOfMeasurement}</span>
-              </div>
             </div>
           </div>
 

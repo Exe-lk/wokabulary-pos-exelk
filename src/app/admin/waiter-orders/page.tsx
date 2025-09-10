@@ -74,7 +74,7 @@ export default function WaiterOrdersPage() {
   const orderState = useAppSelector((state) => state.order);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Waiter functionality state
   const [categorizedItems, setCategorizedItems] = useState<CategorizedItems>({});
   const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -82,7 +82,7 @@ export default function WaiterOrdersPage() {
   const [activeCategory, setActiveCategory] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [activeTab, setActiveTab] = useState<'place-order' | 'my-orders'>('place-order');
-  
+
   // Customer details modal state
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
@@ -121,7 +121,7 @@ export default function WaiterOrdersPage() {
       }
       const data = await response.json();
       setCategorizedItems(data);
-      
+
       // Set first category as active
       const categories = Object.keys(data);
       if (categories.length > 0) {
@@ -176,14 +176,14 @@ export default function WaiterOrdersPage() {
       }
 
       const newOrder = await response.json();
-      
+
       // Show success message and clear order
       const paymentModeText = paymentData.paymentMode === 'CASH' ? 'Cash' : 'Card';
       const balanceText = paymentData.balance > 0 ? ` (Balance: Rs. ${paymentData.balance.toFixed(2)})` : '';
       showSuccessAlert(`Order placed successfully for Table ${orderState.tableNumber}! Order #${newOrder.id}. Payment: ${paymentModeText}${balanceText}`);
       dispatch(clearOrder());
       setShowCustomerModal(false);
-      
+
     } catch (error: any) {
       showErrorAlert(`Failed to place order: ${error.message}`);
     } finally {
@@ -299,7 +299,7 @@ export default function WaiterOrdersPage() {
         {/* Right Side - Order Cart */}
         <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
           <OrderCart />
-          
+
           {/* Place Order Button */}
           {orderState.tableNumber && orderState.items.length > 0 && (
             <div className="p-4 border-t border-gray-200">
@@ -320,25 +320,45 @@ export default function WaiterOrdersPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Tab Navigation */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Bill Management</h1>
+
+              <p className="text-sm text-gray-500 mt-1">Place new orders and view order history</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={fetchFoodItems}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white border-b border-gray-200 px-6 py-4 mt-4">
         <div className="flex space-x-8">
           <button
             onClick={() => setActiveTab('place-order')}
-            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'place-order'
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'place-order'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Place Order
           </button>
           <button
             onClick={() => setActiveTab('my-orders')}
-            className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'my-orders'
+            className={`pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'my-orders'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Ongoing Orders
           </button>

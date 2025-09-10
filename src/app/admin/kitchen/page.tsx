@@ -127,7 +127,7 @@ export default function AdminKitchenManagement() {
       if (statusFilter) {
         params.append('status', statusFilter);
       }
-      
+
       const response = await fetch(`/api/kitchen/orders?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
@@ -180,7 +180,7 @@ export default function AdminKitchenManagement() {
 
   const handleCancelOrder = async (orderId: number) => {
     const Swal = (await import('sweetalert2')).default;
-    
+
     const result = await Swal.fire({
       title: 'Cancel Order?',
       text: `Cancel Order #${orderId}? This cannot be undone.`,
@@ -249,13 +249,13 @@ export default function AdminKitchenManagement() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ${diffMins % 60}m ago`;
-    
+
     return date.toLocaleDateString();
   };
 
@@ -277,16 +277,16 @@ export default function AdminKitchenManagement() {
   const filteredOrders = orders.filter(order => {
     // Filter by status
     const statusMatch = !statusFilter || order.status === statusFilter;
-    
+
     // Filter by search term
-    const searchMatch = !searchTerm || 
+    const searchMatch = !searchTerm ||
       order.id.toString().includes(searchTerm.toLowerCase()) ||
       order.tableNumber.toString().includes(searchTerm.toLowerCase()) ||
       order.staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.orderItems.some(item => 
+      order.orderItems.some(item =>
         item.foodItem.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    
+
     return statusMatch && searchMatch;
   });
 
@@ -307,6 +307,8 @@ export default function AdminKitchenManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
+              <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
+
               <p className="text-sm text-gray-500 mt-1">Manage and update order statuses</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -315,11 +317,10 @@ export default function AdminKitchenManagement() {
               </div>
               <button
                 onClick={() => setShowIngredients(!showIngredients)}
-                className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
-                  showIngredients 
-                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center ${showIngredients
+                    ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gray-600 text-white hover:bg-gray-700'
-                }`}
+                  }`}
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -372,95 +373,94 @@ export default function AdminKitchenManagement() {
                 </div>
               </div>
             </div>
-                          <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                                         <thead className="bg-gray-50">
-                       <tr>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Ingredient Name
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Description
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Unit of Measurement
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Current Stock
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Reorder Level
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Stock Status
-                         </th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                           Last Updated
-                         </th>
-                       </tr>
-                     </thead>
-                                         <tbody className="bg-white divide-y divide-gray-200">
-                       {ingredients.map((ingredient) => (
-                         <tr key={ingredient.id} className="hover:bg-gray-50">
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <div className="text-sm font-medium text-gray-900">{ingredient.name}</div>
-                           </td>
-                           <td className="px-6 py-4">
-                             <div className="text-sm text-gray-900 max-w-xs">
-                               {ingredient.description || 'No description'}
-                             </div>
-                           </td>
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <div className="text-sm text-gray-900 font-medium">{ingredient.unitOfMeasurement}</div>
-                           </td>
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <div className="text-sm text-gray-900">
-                               {ingredient.currentStockQuantity !== undefined 
-                                 ? <span className="font-semibold">{ingredient.currentStockQuantity}</span>
-                                 : <span className="text-gray-400">N/A</span>
-                               }
-                               <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
-                             </div>
-                           </td>
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <div className="text-sm text-gray-900">
-                               {ingredient.reorderLevel !== undefined 
-                                 ? <span className="font-semibold">{ingredient.reorderLevel}</span>
-                                 : <span className="text-gray-400">N/A</span>
-                               }
-                               <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
-                             </div>
-                           </td>
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                               ingredient.currentStockQuantity && ingredient.reorderLevel
-                                 ? ingredient.currentStockQuantity <= ingredient.reorderLevel
-                                   ? 'bg-red-100 text-red-800 border border-red-200'
-                                   : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
-                                   ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                   : 'bg-green-100 text-green-800 border border-green-200'
-                                 : 'bg-gray-100 text-gray-800 border border-gray-200'
-                             }`}>
-                               {ingredient.currentStockQuantity && ingredient.reorderLevel
-                                 ? ingredient.currentStockQuantity <= ingredient.reorderLevel
-                                   ? '⚠️ Low Stock'
-                                   : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
-                                   ? '⚠️ Medium Stock'
-                                   : '✅ Good Stock'
-                                 : 'N/A'
-                               }
-                             </span>
-                           </td>
-                           <td className="px-6 py-4 whitespace-nowrap">
-                             <div className="text-sm text-gray-500">
-                               {ingredient.updatedAt ? new Date(ingredient.updatedAt).toLocaleDateString() : 'N/A'}
-                             </div>
-                           </td>
-                         </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ingredient Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Unit of Measurement
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Current Stock
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Reorder Level
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stock Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Updated
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {ingredients.map((ingredient) => (
+                    <tr key={ingredient.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{ingredient.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 max-w-xs">
+                          {ingredient.description || 'No description'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 font-medium">{ingredient.unitOfMeasurement}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {ingredient.currentStockQuantity !== undefined
+                            ? <span className="font-semibold">{ingredient.currentStockQuantity}</span>
+                            : <span className="text-gray-400">N/A</span>
+                          }
+                          <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {ingredient.reorderLevel !== undefined
+                            ? <span className="font-semibold">{ingredient.reorderLevel}</span>
+                            : <span className="text-gray-400">N/A</span>
+                          }
+                          <span className="text-gray-500 ml-1">{ingredient.unitOfMeasurement}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${ingredient.currentStockQuantity && ingredient.reorderLevel
+                            ? ingredient.currentStockQuantity <= ingredient.reorderLevel
+                              ? 'bg-red-100 text-red-800 border border-red-200'
+                              : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                : 'bg-green-100 text-green-800 border border-green-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200'
+                          }`}>
+                          {ingredient.currentStockQuantity && ingredient.reorderLevel
+                            ? ingredient.currentStockQuantity <= ingredient.reorderLevel
+                              ? '⚠️ Low Stock'
+                              : ingredient.currentStockQuantity <= ingredient.reorderLevel * 1.5
+                                ? '⚠️ Medium Stock'
+                                : '✅ Good Stock'
+                            : 'N/A'
+                          }
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {ingredient.updatedAt ? new Date(ingredient.updatedAt).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -474,7 +474,7 @@ export default function AdminKitchenManagement() {
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {(() => {
                   const ingredientTotals = new Map<string, { name: string; totalQuantity: number; unit: string }>();
-                  
+
                   pendingOrders.forEach(order => {
                     order.orderItems.forEach(item => {
                       if (item.ingredients) {
@@ -482,7 +482,7 @@ export default function AdminKitchenManagement() {
                           const key = ingredient.ingredient.id;
                           const existing = ingredientTotals.get(key);
                           const quantity = ingredient.quantity * item.quantity;
-                          
+
                           if (existing) {
                             existing.totalQuantity += quantity;
                           } else {
@@ -496,7 +496,7 @@ export default function AdminKitchenManagement() {
                       }
                     });
                   });
-                  
+
                   return Array.from(ingredientTotals.values()).map((ingredient, index) => (
                     <div key={index} className="flex justify-between items-center bg-white px-3 py-2 rounded border">
                       <span className="text-sm font-medium text-gray-700">{ingredient.name}</span>
@@ -518,41 +518,37 @@ export default function AdminKitchenManagement() {
           <div className="flex space-x-8">
             <button
               onClick={() => setStatusFilter('')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                statusFilter === '' 
-                  ? 'border-blue-500 text-blue-600' 
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${statusFilter === ''
+                  ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                }`}
             >
               All Orders ({orders.length})
             </button>
             <button
               onClick={() => setStatusFilter('PENDING')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                statusFilter === 'PENDING' 
-                  ? 'border-yellow-500 text-yellow-600' 
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${statusFilter === 'PENDING'
+                  ? 'border-yellow-500 text-yellow-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                }`}
             >
               Pending ({pendingOrders.length})
             </button>
             <button
               onClick={() => setStatusFilter('PREPARING')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                statusFilter === 'PREPARING' 
-                  ? 'border-blue-500 text-blue-600' 
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${statusFilter === 'PREPARING'
+                  ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                }`}
             >
               Preparing ({preparingOrders.length})
             </button>
             <button
               onClick={() => setStatusFilter('READY')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                statusFilter === 'READY' 
-                  ? 'border-green-500 text-green-600' 
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${statusFilter === 'READY'
+                  ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                }`}
             >
               Ready ({readyOrders.length})
             </button>
@@ -565,8 +561,8 @@ export default function AdminKitchenManagement() {
         {/* Results Summary */}
         <div className="mb-6 flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            {filteredOrders.length === 0 
-              ? 'No orders found' 
+            {filteredOrders.length === 0
+              ? 'No orders found'
               : `Showing ${startIndex + 1}-${Math.min(endIndex, filteredOrders.length)} of ${filteredOrders.length} orders`
             }
             {searchTerm && (
@@ -594,10 +590,10 @@ export default function AdminKitchenManagement() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
             <p className="text-gray-500">
-              {searchTerm 
+              {searchTerm
                 ? `No orders match "${searchTerm}". Try adjusting your search.`
-                : statusFilter 
-                  ? `No ${statusFilter.toLowerCase()} orders right now.` 
+                : statusFilter
+                  ? `No ${statusFilter.toLowerCase()} orders right now.`
                   : 'No kitchen orders at the moment.'
               }
             </p>
@@ -606,158 +602,158 @@ export default function AdminKitchenManagement() {
           <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {paginatedOrders.map((order) => (
-              <div key={order.id} className={`bg-white rounded-xl shadow-sm border-2 ${getStatusColor(order.status)} p-6`}>
-                {/* Order Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">#{order.id}</span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Table {order.tableNumber}</h3>
-                      <p className="text-sm text-gray-500">{order.staff.name}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.status)}`}>
-                      {order.status}
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">{formatTime(order.createdAt)}</p>
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div className="space-y-3 mb-4">
-                  {order.orderItems.slice(0, 3).map((item) => (
-                    <div key={item.id} className="border rounded-lg p-3 bg-white">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{item.foodItem.name}</p>
-                          <p className="text-xs text-gray-500">{item.portion.name}</p>
-                          {item.specialRequests && (
-                            <p className="text-xs text-orange-600 mt-1">⚠️ {item.specialRequests}</p>
-                          )}
-                        </div>
-                        <span className="text-sm font-medium text-gray-900 ml-2">×{item.quantity}</span>
+                <div key={order.id} className={`bg-white rounded-xl shadow-sm border-2 ${getStatusColor(order.status)} p-6`}>
+                  {/* Order Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">#{order.id}</span>
                       </div>
-                      
-                      {/* Ingredients */}
-                      {item.ingredients && item.ingredients.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-gray-100">
-                          <p className="text-xs font-medium text-gray-700 mb-1">Ingredients:</p>
-                          <div className="space-y-1">
-                            {item.ingredients.map((ingredient) => (
-                              <div key={ingredient.id} className="flex justify-between text-xs">
-                                <span className="text-gray-600">{ingredient.ingredient.name}</span>
-                                <span className="text-gray-800 font-medium">
-                                  {ingredient.quantity} {ingredient.ingredient.unitOfMeasurement}
-                                </span>
-                              </div>
-                            ))}
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Table {order.tableNumber}</h3>
+                        <p className="text-sm text-gray-500">{order.staff.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.status)}`}>
+                        {order.status}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">{formatTime(order.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="space-y-3 mb-4">
+                    {order.orderItems.slice(0, 3).map((item) => (
+                      <div key={item.id} className="border rounded-lg p-3 bg-white">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{item.foodItem.name}</p>
+                            <p className="text-xs text-gray-500">{item.portion.name}</p>
+                            {item.specialRequests && (
+                              <p className="text-xs text-orange-600 mt-1">⚠️ {item.specialRequests}</p>
+                            )}
                           </div>
+                          <span className="text-sm font-medium text-gray-900 ml-2">×{item.quantity}</span>
                         </div>
-                      )}
+
+                        {/* Ingredients */}
+                        {item.ingredients && item.ingredients.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            <p className="text-xs font-medium text-gray-700 mb-1">Ingredients:</p>
+                            <div className="space-y-1">
+                              {item.ingredients.map((ingredient) => (
+                                <div key={ingredient.id} className="flex justify-between text-xs">
+                                  <span className="text-gray-600">{ingredient.ingredient.name}</span>
+                                  <span className="text-gray-800 font-medium">
+                                    {ingredient.quantity} {ingredient.ingredient.unitOfMeasurement}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {order.orderItems.length > 3 && (
+                      <p className="text-xs text-gray-500">+ {order.orderItems.length - 3} more items</p>
+                    )}
+                  </div>
+
+                  {/* Special Notes */}
+                  {order.notes && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs font-medium text-yellow-800 mb-1">Special Notes:</p>
+                      <p className="text-xs text-yellow-700">{order.notes}</p>
                     </div>
-                  ))}
-                  {order.orderItems.length > 3 && (
-                    <p className="text-xs text-gray-500">+ {order.orderItems.length - 3} more items</p>
                   )}
-                </div>
 
-                {/* Special Notes */}
-                {order.notes && (
-                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-xs font-medium text-yellow-800 mb-1">Special Notes:</p>
-                    <p className="text-xs text-yellow-700">{order.notes}</p>
+                  {/* Total */}
+                  <div className="border-t pt-3 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Total:</span>
+                      <span className="text-lg font-bold text-gray-900">Rs. {order.totalAmount.toFixed(2)}</span>
+                    </div>
                   </div>
-                )}
 
-                {/* Total */}
-                <div className="border-t pt-3 mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total:</span>
-                    <span className="text-lg font-bold text-gray-900">Rs. {order.totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    {order.status === 'PENDING' && (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => handleStatusUpdate(order.id, 'PREPARING')}
+                          disabled={updatingOrderId === order.id}
+                          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                          {updatingOrderId === order.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Starting...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                              Start Preparing
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={updatingOrderId === order.id}
+                          className="w-full bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                          {updatingOrderId === order.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Cancelling...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Cancel Order
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  {order.status === 'PENDING' && (
-                    <div className="space-y-2">
+                    {order.status === 'PREPARING' && (
                       <button
-                        onClick={() => handleStatusUpdate(order.id, 'PREPARING')}
+                        onClick={() => handleStatusUpdate(order.id, 'READY')}
                         disabled={updatingOrderId === order.id}
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                       >
                         {updatingOrderId === order.id ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Starting...
+                            Marking...
                           </>
                         ) : (
                           <>
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            Start Preparing
+                            Mark as Ready
                           </>
                         )}
                       </button>
-                      <button
-                        onClick={() => handleCancelOrder(order.id)}
-                        disabled={updatingOrderId === order.id}
-                        className="w-full bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                      >
-                        {updatingOrderId === order.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Cancelling...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Cancel Order
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
+                    )}
 
-                  {order.status === 'PREPARING' && (
-                    <button
-                      onClick={() => handleStatusUpdate(order.id, 'READY')}
-                      disabled={updatingOrderId === order.id}
-                      className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    >
-                      {updatingOrderId === order.id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Marking...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          Mark as Ready
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {order.status === 'READY' && (
-                    <div className="w-full bg-green-100 text-green-800 py-3 rounded-lg font-medium text-center flex items-center justify-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Ready for Pickup
-                    </div>
-                  )}
+                    {order.status === 'READY' && (
+                      <div className="w-full bg-green-100 text-green-800 py-3 rounded-lg font-medium text-center flex items-center justify-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Ready for Pickup
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
             </div>
 
             {/* Pagination */}
@@ -774,7 +770,7 @@ export default function AdminKitchenManagement() {
                   >
                     Previous
                   </button>
-                  
+
                   {/* Page Numbers */}
                   <div className="flex items-center space-x-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -788,23 +784,22 @@ export default function AdminKitchenManagement() {
                       } else {
                         pageNum = currentPage - 2 + i;
                       }
-                      
+
                       return (
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`px-3 py-2 text-sm font-medium rounded-md ${
-                            currentPage === pageNum
+                          className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNum
                               ? 'bg-blue-600 text-white'
                               : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                          }`}
+                            }`}
                         >
                           {pageNum}
                         </button>
                       );
                     })}
                   </div>
-                  
+
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}

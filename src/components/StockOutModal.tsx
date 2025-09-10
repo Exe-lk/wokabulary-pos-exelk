@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { showCustomAlert, showErrorAlert } from '@/lib/sweetalert';
+import { showCustomAlert, showErrorAlert, showConfirmDialog, showLoadingAlert } from '@/lib/sweetalert';
 
 interface Ingredient {
   id: string;
@@ -24,84 +24,87 @@ interface StockOutModalProps {
 
 export default function StockOutModal({ isOpen, onClose, onStockOut, ingredient }: StockOutModalProps) {
   const [quantity, setQuantity] = useState("");
-  const [reason, setReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
 
     const quantityNum = parseFloat(quantity);
     if (isNaN(quantityNum) || quantityNum <= 0) {
       setError("Please enter a valid quantity greater than 0");
-      setIsLoading(false);
       return;
     }
 
     if (quantityNum > ingredient.currentStockQuantity) {
-      setError(`Cannot stock out more than available. Current stock: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}`);
-      setIsLoading(false);
+      setError(
+        `Cannot stock out more than available. Current stock: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}`
+      );
       return;
     }
 
-    const finalReason = reason === "Other" ? customReason.trim() : reason.trim();
-    if (!finalReason) {
-      setError("Please provide a reason for stock out");
-      setIsLoading(false);
+    // Show confirmation dialog
+    const result = await showConfirmDialog(
+      "Confirm Stock Out",
+      `Are you sure you want to stock out ${quantityNum} ${ingredient.unitOfMeasurement} of ${ingredient.name}? This action will reduce the current stock from ${ingredient.currentStockQuantity} to ${ingredient.currentStockQuantity - quantityNum} ${ingredient.unitOfMeasurement}. This action cannot be undone.`,
+      "Yes, Stock Out",
+      "Cancel"
+    );
+
+    if (!result.isConfirmed) {
       return;
     }
+
+    setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/ingredients/${ingredient.id}/stock-out`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          quantity: quantityNum,
-          reason: finalReason
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/ingredients/${ingredient.id}/stock-out`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quantity: quantityNum,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process stock out');
+        throw new Error(errorData.error || "Failed to process stock out");
       }
 
-      // Show success message
+      // ✅ Show success message
       showCustomAlert({
-        title: 'Stock Out Successful',
+        title: "Stock Out Successful",
         html: `
-          <div class="text-left">
-            <p class="mb-2">Successfully stocked out <strong>${quantityNum} ${ingredient.unitOfMeasurement}</strong> of <strong>${ingredient.name}</strong>.</p>
-            <p class="text-sm text-gray-600">Reason: ${finalReason}</p>
-            <p class="text-sm text-gray-600">Remaining stock: ${ingredient.currentStockQuantity - quantityNum} ${ingredient.unitOfMeasurement}</p>
-          </div>
-        `,
-        icon: 'success',
-        confirmButtonText: 'OK'
+        <div class="text-left">
+          <p class="mb-2">Successfully stocked out <strong>${quantityNum} ${ingredient.unitOfMeasurement}</strong> of <strong>${ingredient.name}</strong>.</p>
+          <p class="text-sm text-gray-600">Remaining stock: ${ingredient.currentStockQuantity - quantityNum
+          } ${ingredient.unitOfMeasurement}</p>
+        </div>
+      `,
+        icon: "success",
+        confirmButtonText: "OK",
       });
 
       setQuantity("");
-      setReason("");
-      setCustomReason("");
       onStockOut();
       onClose();
     } catch (err: any) {
       setError(err.message);
-      showErrorAlert('Error', err.message);
+      showErrorAlert("Error", err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+
   const handleClose = () => {
     setQuantity("");
-    setReason("");
-    setCustomReason("");
     setError("");
     onClose();
   };
@@ -145,18 +148,19 @@ export default function StockOutModal({ isOpen, onClose, onStockOut, ingredient 
                   min="0.01"
                   max={ingredient.currentStockQuantity}
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder={`Enter quantity (max: ${ingredient.currentStockQuantity})`}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setQuantity(value);
+                    }
+                  }} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder={`Enter quantity (max: ${ingredient.currentStockQuantity}) ${ingredient.unitOfMeasurement}`}
                   required
                 />
-                <span className="absolute right-3 top-2 text-sm text-gray-500">
-                  {ingredient.unitOfMeasurement}
-                </span>
               </div>
             </div>
 
-            <div className="mb-4">
+            {/*  <div className="mb-4">
               <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
                 Reason for Stock Out
               </label>
@@ -193,7 +197,7 @@ export default function StockOutModal({ isOpen, onClose, onStockOut, ingredient 
                   required={reason === "Other"}
                 />
               </div>
-            )}
+            )} */}
 
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -212,21 +216,19 @@ export default function StockOutModal({ isOpen, onClose, onStockOut, ingredient 
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-md hover:from-orange-600 hover:to-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Processing...
                   </div>
                 ) : (
-                  'Stock Out'
+                  "Stock Out"
                 )}
               </button>
+
             </div>
           </form>
         </div>

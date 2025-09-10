@@ -7,18 +7,11 @@ export async function POST(
 ) {
   try {
     const { id } = params;
-    const { quantity, reason } = await request.json();
+    const { quantity } = await request.json();
 
     if (!quantity || quantity <= 0) {
       return NextResponse.json(
         { error: 'Valid quantity is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!reason || reason.trim() === '') {
-      return NextResponse.json(
-        { error: 'Reason for stock out is required' },
         { status: 400 }
       );
     }
@@ -55,13 +48,9 @@ export async function POST(
       },
     });
 
-    // Log the stock out operation (you might want to create a separate table for this in the future)
-    console.log(`Stock out: ${quantity} ${existingIngredient.unitOfMeasurement} of ${existingIngredient.name} - Reason: ${reason}`);
-
     return NextResponse.json({
       ...updatedIngredient,
       stockOutQuantity: quantity,
-      stockOutReason: reason,
       previousStock: existingIngredient.currentStockQuantity
     });
   } catch (error) {
