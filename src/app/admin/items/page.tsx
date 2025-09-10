@@ -131,12 +131,61 @@ export default function ManageItems() {
     setSelectedItem(null);
   };
 
+  const formatPrice = (price: number) => {
+    return `Rs. ${price.toLocaleString('en-LK')}`;
+  };
+
+  const handleToggleAvailability = async (itemId: string) => {
+    try {
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+
+      const response = await fetch(`/api/admin/food-items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isActive: !item.isActive,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Show detailed error message for constraint violations
+        if (errorData.affectedOrders) {
+          const action = item.isActive ? 'disable' : 'enable';
+          const orderList = errorData.affectedOrders
+            .map((order: any) => `Order #${order.orderId} (Table ${order.tableNumber}, Status: ${order.status})`)
+            .join('\n');
+          showErrorAlert(
+            `Cannot ${action} food item "${item.name}"`,
+            `Affected incomplete orders:\n${orderList}\n\n${errorData.error}`
+          );
+        } else {
+          showErrorAlert('Error', errorData.error || 'Failed to update item availability');
+        }
+        return;
+      }
+
+      // Update local state
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item.id === itemId ? { ...item, isActive: !item.isActive } : item
+        )
+      );
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleDeleteItem = async (itemId: string) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
     const Swal = (await import('sweetalert2')).default;
-    
+
     const result = await Swal.fire({
       title: 'Delete Item?',
       text: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
@@ -177,10 +226,6 @@ export default function ManageItems() {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return `Rs. ${price.toLocaleString('en-LK')}`;
-  };
-
   const getPriceRange = (portions: FoodItemPortion[]) => {
     if (portions.length === 0) return 'N/A';
     if (portions.length === 1) return formatPrice(portions[0].price);
@@ -193,208 +238,271 @@ export default function ManageItems() {
     return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
   };
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   );
-  // }
+        // if (isLoading) {
+        //   return (
+        //     <div className="flex items-center justify-center min-h-screen">
+        //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        //     </div>
+        //   );
+        // }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Food Items...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Food Items</h1>
-          <p className="text-gray-600 mt-1">Add, edit, and manage your menu items</p>
-        </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Add Food Item</span>
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="max-w-md">
-          <input
-            type="text"
-            placeholder="Search by name, category, portion, or price..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-red-600">{error}</p>
+        if (isLoading) {
+          return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading Food Items...</p>
+              </div>
             </div>
-          )}
+          );
+        }
 
-          {/* Food Items List */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Food Items</h2>
-                <div className="text-sm text-gray-500">
-                  {filteredItems.length === 0 
-                    ? 'No items found' 
-                    : `Showing ${filteredItems.length} of ${items.length} items`
-                  }
-                  {searchTerm && (
-                    <span className="ml-2">
-                      for "<span className="font-medium">{searchTerm}</span>"
-                    </span>
-                  )}
+        return (
+          <div>
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Manage Food Items</h1>
+                    <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your menu items</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span>Add Food Item</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Portions & Prices</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {item.imageUrl && (
-                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 overflow-hidden">
+            {/* Search Bar */}
+            <div className="bg-white border-b">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className="relative max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by name, category, portion, or price..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                <p className="text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="overflow-x-auto">
+                <table className="w-full table-fixed">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/4">Item</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Category</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/3">Portions, Prices & Ingredients</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Price Range</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/12">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 w-1/8">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="py-4 px-4">
+                          <div className="flex items-start">
+                            {item.imageUrl && (
                               <img
                                 src={item.imageUrl}
                                 alt={item.name}
-                                className="w-full h-full object-cover"
+                                className="w-12 h-12 rounded-lg object-cover mr-3 flex-shrink-0"
                               />
-                            </div>
-                          )}
-                          {!item.imageUrl && (
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                              <span className="text-white font-semibold text-sm">
-                                {item.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                            {item.description && (
-                              <div className="text-sm text-gray-500 truncate max-w-xs" title={item.description}>
-                                {item.description}
-                              </div>
                             )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {item.category.name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-2">
-                          {item.foodItemPortions.map((portion) => (
-                            <div key={portion.id} className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-900">{portion.portion.name}</span>
-                              <span className="text-sm font-medium text-blue-600">
-                                {formatPrice(portion.price)}
-                              </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-gray-900 truncate">{item.name}</h3>
+                              {item.description && (
+                                <p
+                                  className="text-sm text-gray-500 mt-1 break-words line-clamp-2 cursor-help"
+                                  title={item.description}
+                                >
+                                  {item.description}
+                                </p>
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-900">
-                          {getPriceRange(item.foodItemPortions)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleEditItem(item.id)}
-                            className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-sm text-gray-900">{item.category.name}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="space-y-2">
+                            {item.foodItemPortions.map((portion) => (
+                              <div key={portion.id} className="text-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-gray-700 font-medium">{portion.portion.name}</span>
+                                  <span className="text-blue-600 font-medium">
+                                    {formatPrice(portion.price)}
+                                  </span>
+                                </div>
+                                {portion.ingredients && portion.ingredients.length > 0 && (
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    <span className="font-medium">Ingredients:</span>
+                                    <div className="ml-2 space-y-0.5">
+                                      {portion.ingredients.map((ing) => (
+                                        <div key={ing.id} className="flex items-center justify-between">
+                                          <span>{ing.ingredient.name}</span>
+                                          <span className="text-gray-400">
+                                            {ing.quantity} {ing.ingredient.unitOfMeasurement}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-sm font-medium text-gray-900">
+                            {getPriceRange(item.foodItemPortions)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                              }`}
                           >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            {item.isActive ? "Available" : "Unavailable"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleEditItem(item.id)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleToggleAvailability(item.id)}
+                              className={`flex items-center gap-1 text-sm font-medium ${item.isActive
+                                ? "text-red-600 hover:text-red-800"
+                                : "text-green-600 hover:text-green-800"
+                                }`}
+                            >
+                              {item.isActive ? (
+                                <>
+                                  <FaTimesCircle className="text-red-600" />
+                                  Disable
+                                </>
+                              ) : (
+                                <>
+                                  <FaCheckCircle className="text-green-600" />
+                                  Enable
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-            {filteredItems.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Food Items Found</h3>
-                <p className="text-gray-500">
-                  {searchTerm 
-                    ? `No items match "${searchTerm}". Try adjusting your search.`
-                    : 'Food items will appear here when they are added.'
-                  }
-                </p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="mt-4 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Clear search
-                  </button>
+                {filteredItems.length === 0 && (
+                  <div className="text-center py-12">
+                    {searchTerm ? (
+                      <>
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No items found</h3>
+                        <p className="mt-1 text-sm text-gray-500">Try adjusting your search terms.</p>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No food items</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Get started by creating your first food item.
+                        </p>
+                        <div className="mt-6">
+                          <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors"
+                          >
+                            Add Food Item
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+            </div>
+
+            <AddFoodItemModal
+              isOpen={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
+              onFoodItemAdded={handleFoodItemAdded}
+            />
+
+            <EditFoodItemModal
+              isOpen={isEditModalOpen}
+              onClose={handleCloseEditModal}
+              foodItem={selectedItem}
+              onFoodItemUpdated={handleFoodItemUpdated}
+            />
+            </div>
           </div>
-        </div>
-      </div>
-
-        <AddFoodItemModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onFoodItemAdded={handleFoodItemAdded}
-        />
-
-        <EditFoodItemModal
-          isOpen={isEditModalOpen}
-          onClose={handleCloseEditModal}
-          foodItem={selectedItem}
-          onFoodItemUpdated={handleFoodItemUpdated}
-        />
-      </div>
-    </div>
-  );
-} 
+        );
+}
