@@ -186,10 +186,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if all ingredients exist (if provided)
-    const allIngredientIds = [...new Set(portions
+    const allIngredientIds: string[] = [...new Set(portions
       ?.flatMap((p: any) => p.ingredients || [])
       .map((ing: any) => ing.ingredientId)
-      .filter(Boolean) || [])];
+      .filter(Boolean) || [])] as string[];
     
     if (allIngredientIds.length > 0) {
       const existingIngredients = await prisma.ingredient.findMany({
