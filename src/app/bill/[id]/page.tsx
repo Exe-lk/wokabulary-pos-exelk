@@ -157,13 +157,13 @@ export default function BillPage() {
   const total = subtotal + serviceCharge;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen bg-gray-50 py-2 sm:py-4">
+      <div className="max-w-2xl mx-auto px-2 sm:px-4 lg:px-6">
         {/* Compact Header */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden" id="bill-content">
-          {/* Restaurant Header - Compact */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4">
-            <div className="flex items-center justify-between">
+          {/* Restaurant Header - Mobile Responsive */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-3">
                 <div className="bg-white p-1.5 rounded-lg">
                   <Image
@@ -175,70 +175,106 @@ export default function BillPage() {
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">Wokabulary</h1>
-                  <p className="text-blue-100 text-sm">Fine Dining Experience</p>
+                  <h1 className="text-lg sm:text-xl font-bold">Wokabulary</h1>
+                  <p className="text-blue-100 text-xs sm:text-sm">Fine Dining Experience</p>
                 </div>
               </div>
-              <div className="text-right text-sm">
-                <p className="text-blue-100 flex items-center">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  49 Old Kottawa Rd, Nugegoda 10250
+              <div className="text-left sm:text-right text-xs sm:text-sm">
+                <p className="text-blue-100 flex items-center mb-1">
+                  <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                  <span className="break-words">49 Old Kottawa Rd, Nugegoda 10250</span>
                 </p>
-                <p className="text-blue-100 flex items-center mt-0.5">
-                  <Phone className="w-3 h-3 mr-1" />
+                <p className="text-blue-100 flex items-center">
+                  <Phone className="w-3 h-3 mr-1 flex-shrink-0" />
                   076 608 7824
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Bill Content - Compact */}
-          <div className="p-4">
-            {/* Bill Info Row */}
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-2">BILL #{order.id}</h2>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          {/* Bill Content - Mobile Responsive */}
+          <div className="p-3 sm:p-4">
+            {/* Bill Info Section - Mobile Responsive */}
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0 mb-4">
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">BILL #{order.id}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs sm:text-sm">
                   <p className="flex items-center text-gray-700">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    Table {order.tableNumber}
+                    <MapPin className="w-3 h-3 mr-2 flex-shrink-0" />
+                    <span>Table {order.tableNumber}</span>
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {formatDate(order.createdAt)}
+                    <Clock className="w-3 h-3 mr-2 flex-shrink-0" />
+                    <span>{formatDate(order.createdAt)}</span>
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <User className="w-3 h-3 mr-1" />
-                    {order.staff.name}
+                    <User className="w-3 h-3 mr-2 flex-shrink-0" />
+                    <span>{order.staff.name}</span>
                   </p>
                   <p className="flex items-center text-gray-700">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {formatTime(order.createdAt)}
+                    <Clock className="w-3 h-3 mr-2 flex-shrink-0" />
+                    <span>{formatTime(order.createdAt)}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Customer Information - Compact */}
+              {/* Customer Information - Mobile Responsive */}
               {(order.customerName || order.customerEmail || order.customerPhone) && (
-                <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                  <h3 className="font-semibold text-gray-900 mb-1">Customer</h3>
-                  {order.customerName && (
-                    <p className="text-gray-700">Name: {order.customerName}</p>
-                  )}
-                  {order.customerEmail && (
-                    <p className="text-gray-700">Email: {order.customerEmail}</p>
-                  )}
-                  {order.customerPhone && (
-                    <p className="text-gray-700">Phone: {order.customerPhone}</p>
-                  )}
+                <div className="bg-gray-50 p-3 rounded-lg text-xs sm:text-sm lg:max-w-xs">
+                  <h3 className="font-semibold text-gray-900 mb-2">Customer Information</h3>
+                  <div className="space-y-1">
+                    {order.customerName && (
+                      <p className="text-gray-700">
+                        <span className="font-medium">Name:</span> {order.customerName}
+                      </p>
+                    )}
+                    {order.customerEmail && (
+                      <p className="text-gray-700 break-words">
+                        <span className="font-medium">Email:</span> {order.customerEmail}
+                      </p>
+                    )}
+                    {order.customerPhone && (
+                      <p className="text-gray-700">
+                        <span className="font-medium">Phone:</span> {order.customerPhone}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Order Items - Compact Table */}
+            {/* Order Items - Mobile Responsive */}
             <div className="border-t border-gray-200 pt-3">
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Order Details</h3>
-              <div className="overflow-x-auto">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3">Order Details</h3>
+              
+              {/* Mobile Card Layout - Hidden on sm and up */}
+              <div className="sm:hidden space-y-3">
+                {order.orderItems.map((item) => (
+                  <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm">{item.foodItem.name}</p>
+                        {item.foodItem.description && (
+                          <p className="text-xs text-gray-600 mt-1">{item.foodItem.description}</p>
+                        )}
+                        {item.specialRequests && (
+                          <p className="text-xs text-blue-600 italic mt-1">Special: {item.specialRequests}</p>
+                        )}
+                      </div>
+                      <div className="text-right ml-3">
+                        <p className="font-bold text-gray-900 text-sm">Rs. {item.totalPrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-gray-600">
+                      <span>{item.portion.name} • Qty: {item.quantity}</span>
+                      <span>Rs. {item.unitPrice.toFixed(2)} each</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table Layout - Hidden on mobile */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
@@ -274,10 +310,10 @@ export default function BillPage() {
               </div>
             </div>
 
-            {/* Bill Summary - Compact */}
+            {/* Bill Summary - Mobile Responsive */}
             <div className="border-t border-gray-300 pt-3 mt-3">
               <div className="max-w-xs ml-auto">
-                <div className="space-y-1 text-sm">
+                <div className="space-y-1 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-700">Subtotal:</span>
                     <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
@@ -288,7 +324,7 @@ export default function BillPage() {
                       <span className="font-medium">Rs. {serviceCharge.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-300">
+                  <div className="flex justify-between text-sm sm:text-base font-bold text-gray-900 pt-2 border-t border-gray-300">
                     <span>Total:</span>
                     <span>Rs. {total.toFixed(2)}</span>
                   </div>
@@ -296,29 +332,29 @@ export default function BillPage() {
               </div>
             </div>
 
-            {/* Footer - Compact */}
+            {/* Footer - Mobile Responsive */}
             <div className="border-t border-gray-200 pt-3 mt-4 text-center">
-              <p className="text-gray-600 text-sm mb-1">Thank you for dining with us!</p>
+              <p className="text-gray-600 text-xs sm:text-sm mb-1">Thank you for dining with us!</p>
               <p className="text-xs text-gray-500">We hope to see you again soon.</p>
             </div>
           </div>
         </div>
 
-        {/* Download Button - Compact */}
-        <div className="mt-4 text-center">
+        {/* Download Button - Mobile Responsive */}
+        <div className="mt-3 sm:mt-4 text-center px-4">
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center mx-auto text-sm"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-sm sm:text-base"
           >
             {isDownloading ? (
               <>
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Generating PDF...
               </>
             ) : (
               <>
-                <Download className="w-3 h-3 mr-2" />
+                <Download className="w-4 h-4 mr-2" />
                 Download PDF
               </>
             )}

@@ -40,6 +40,7 @@ export default function ManageCategories() {
   const [addingStockTo, setAddingStockTo] = useState<Ingredient | null>(null);
   const [stockingOutFrom, setStockingOutFrom] = useState<Ingredient | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [hasShownLowStockAlert, setHasShownLowStockAlert] = useState(false);
 
   useEffect(() => {
     // Check if admin is logged in
@@ -94,6 +95,8 @@ export default function ManageCategories() {
 
   const handleIngredientAdded = () => {
     fetchIngredients();
+    // Don't reset alert flag when ingredients are updated via actions
+    // The alert should only show on first page load
   };
 
   const handleEditIngredient = (ingredient: Ingredient) => {
@@ -268,9 +271,9 @@ export default function ManageCategories() {
 
   const lowStockIngredients = getLowStockIngredients();
 
-  // Show alert for low stock items when data is loaded
+  // Show alert for low stock items when data is first loaded (only once per session)
   useEffect(() => {
-    if (!isLoading && lowStockIngredients.length > 0) {
+    if (!isLoading && !hasShownLowStockAlert && lowStockIngredients.length > 0) {
       const ingredientList = lowStockIngredients.map(ing =>
         `<li><strong>${ing.name}</strong>: ${ing.currentStockQuantity} ${ing.unitOfMeasurement} (Reorder level: ${ing.reorderLevel} ${ing.unitOfMeasurement})</li>`
       ).join('');
@@ -288,8 +291,18 @@ export default function ManageCategories() {
         icon: 'warning',
         confirmButtonText: 'OK'
       });
+
+      // Mark that we've shown the alert so it doesn't show again
+      setHasShownLowStockAlert(true);
     }
-  }, [isLoading, lowStockIngredients]);
+  }, [isLoading, hasShownLowStockAlert, lowStockIngredients]);
+
+  // Reset the alert flag if there are no more low stock items (for next time items go low)
+  useEffect(() => {
+    if (!isLoading && hasShownLowStockAlert && lowStockIngredients.length === 0) {
+      setHasShownLowStockAlert(false);
+    }
+  }, [isLoading, hasShownLowStockAlert, lowStockIngredients.length]);
 
   if (isLoading) {
     return (

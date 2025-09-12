@@ -69,22 +69,99 @@ export async function POST(
         <head>
           <meta charset="utf-8">
           <title>Your Bill - Restaurant</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
+            body { 
+              font-family: Arial, sans-serif; 
+              line-height: 1.6; 
+              color: #333; 
+              margin: 0; 
+              padding: 0; 
+              background-color: #f8f9fa;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 0 auto; 
+              padding: 20px; 
+              background-color: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              background: linear-gradient(135deg, #2563eb, #1d4ed8);
+              color: white;
+              padding: 20px;
+              border-radius: 8px;
+              margin: -20px -20px 30px -20px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
             .logo { max-width: 150px; height: auto; }
-            .bill-summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .bill-summary { 
+              background: #f8f9fa; 
+              padding: 20px; 
+              border-radius: 8px; 
+              margin: 20px 0;
+              border-left: 4px solid #2563eb;
+            }
+            .bill-summary h3 {
+              margin-top: 0;
+              color: #2563eb;
+            }
+            .bill-summary p {
+              margin: 8px 0;
+              font-size: 14px;
+            }
             .bill-button { 
               display: inline-block; 
-              background: #007bff; 
-              color: white; 
-              padding: 12px 24px; 
+              background: #2563eb; 
+              color: white !important; 
+              padding: 14px 28px; 
               text-decoration: none; 
-              border-radius: 5px; 
-              margin: 20px 0; 
+              border-radius: 6px; 
+              margin: 20px 0;
+              font-weight: bold;
+              font-size: 16px;
+              box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
             }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .bill-button:hover {
+              background: #1d4ed8 !important;
+            }
+            .footer { 
+              text-align: center; 
+              margin-top: 30px; 
+              color: #666; 
+              font-size: 14px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+            }
+            @media only screen and (max-width: 600px) {
+              .container {
+                padding: 15px !important;
+                margin: 10px !important;
+                border-radius: 4px !important;
+              }
+              .header {
+                margin: -15px -15px 20px -15px !important;
+                padding: 15px !important;
+              }
+              .header h1 {
+                font-size: 20px !important;
+              }
+              .bill-summary {
+                padding: 15px !important;
+              }
+              .bill-button {
+                display: block !important;
+                width: calc(100% - 56px) !important;
+                text-align: center !important;
+                box-sizing: border-box !important;
+              }
+            }
           </style>
         </head>
         <body>
