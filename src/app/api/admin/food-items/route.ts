@@ -90,64 +90,62 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create food item with portions and ingredients in a transaction
-    const foodItem = await prisma.$transaction(async (tx) => {
-      // Create the food item first
-      const newFoodItem = await tx.foodItem.create({
+    // Create food item with portions and ingredients (serverless-friendly approach)
+    // Step 1: Create the food item first
+    const newFoodItem = await prisma.foodItem.create({
+      data: {
+        name,
+        description: description || null,
+        imageUrl: imageUrl || null,
+        categoryId,
+      }
+    });
+
+    // Step 2: Create food item portions and their ingredients
+    for (const portion of portions) {
+      const foodItemPortion = await prisma.foodItemPortion.create({
         data: {
-          name,
-          description: description || null,
-          imageUrl: imageUrl || null,
-          categoryId,
+          foodItemId: newFoodItem.id,
+          portionId: portion.portionId,
+          price: parseFloat(portion.price)
         }
       });
 
-      // Create food item portions and their ingredients
-      for (const portion of portions) {
-        const foodItemPortion = await tx.foodItemPortion.create({
-          data: {
-            foodItemId: newFoodItem.id,
-            portionId: portion.portionId,
-            price: parseFloat(portion.price)
-          }
-        });
+      // Create ingredients for this portion if provided
+      if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
+        const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
+        
+        if (validIngredients.length > 0) {
+          await prisma.foodItemPortionIngredient.createMany({
+            data: validIngredients.map((ingredient: any) => ({
+              foodItemPortionId: foodItemPortion.id,
+              ingredientId: ingredient.ingredientId,
+              quantity: parseFloat(ingredient.quantity)
+            }))
+          });
+        }
+      }
+    }
 
-        // Create ingredients for this portion if provided
-        if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
-          const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
-          
-          if (validIngredients.length > 0) {
-            await tx.foodItemPortionIngredient.createMany({
-              data: validIngredients.map((ingredient: any) => ({
-                foodItemPortionId: foodItemPortion.id,
-                ingredientId: ingredient.ingredientId,
-                quantity: parseFloat(ingredient.quantity)
-              }))
-            });
+    // Step 3: Fetch the complete food item with relations
+    const foodItem = await prisma.foodItem.findUnique({
+      where: { id: newFoodItem.id },
+      include: {
+        category: true,
+        foodItemPortions: {
+          include: {
+            portion: true,
+            ingredients: {
+              include: {
+                ingredient: true
+              }
+            }
+          },
+          orderBy: {
+            price: 'asc'
           }
         }
       }
-
-      // Return the complete food item with relations
-      return await tx.foodItem.findUnique({
-        where: { id: newFoodItem.id },
-        include: {
-          category: true,
-          foodItemPortions: {
-            include: {
-              portion: true,
-              ingredients: {
-                include: {
-                  ingredient: true
-                }
-              }
-            },
-            orderBy: {
-              price: 'asc'
-            }
-          }
-        }
-      });
     });
 
     return NextResponse.json(foodItem, { status: 201 });
@@ -255,83 +253,84 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update food item in a transaction
-    const foodItem = await prisma.$transaction(async (tx) => {
-      const updateData: any = {};
-      
-      if (name !== undefined) updateData.name = name;
-      if (description !== undefined) updateData.description = description || null;
-      if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
-      if (categoryId !== undefined) updateData.categoryId = categoryId;
-      if (isActive !== undefined) updateData.isActive = isActive;
+    // Update food item (serverless-friendly approach)
+    const updateData: any = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description || null;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
-      // Update the food item
-      const updatedFoodItem = await tx.foodItem.update({
-        where: { id },
-        data: updateData
-      });
+    // Step 1: Update the food item
+    const updatedFoodItem = await prisma.foodItem.update({
+      where: { id },
+      data: updateData
+    });
 
-      // If portions are provided, update them
-      if (portions && Array.isArray(portions) && portions.length > 0) {
-        // Validate portions
-        for (const portion of portions) {
-          if (!portion.portionId || !portion.price || portion.price <= 0) {
-            throw new Error('Each portion must have a valid portionId and positive price');
-          }
-        }
-
-        // Delete existing portions (cascade will handle ingredients)
-        await tx.foodItemPortion.deleteMany({
-          where: { foodItemId: id }
-        });
-
-        // Create new portions with ingredients
-        for (const portion of portions) {
-          const foodItemPortion = await tx.foodItemPortion.create({
-            data: {
-              foodItemId: id,
-              portionId: portion.portionId,
-              price: parseFloat(portion.price)
-            }
-          });
-
-          // Create ingredients for this portion if provided
-          if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
-            const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
-            
-            if (validIngredients.length > 0) {
-              await tx.foodItemPortionIngredient.createMany({
-                data: validIngredients.map((ingredient: any) => ({
-                  foodItemPortionId: foodItemPortion.id,
-                  ingredientId: ingredient.ingredientId,
-                  quantity: parseFloat(ingredient.quantity)
-                }))
-              });
-            }
-          }
+    // Step 2: If portions are provided, update them
+    if (portions && Array.isArray(portions) && portions.length > 0) {
+      // Validate portions
+      for (const portion of portions) {
+        if (!portion.portionId || !portion.price || portion.price <= 0) {
+          return NextResponse.json(
+            { error: 'Each portion must have a valid portionId and positive price' },
+            { status: 400 }
+          );
         }
       }
 
-      // Return the complete food item with relations
-      return await tx.foodItem.findUnique({
-        where: { id },
-        include: {
-          category: true,
-          foodItemPortions: {
-            include: {
-              portion: true,
-              ingredients: {
-                include: {
-                  ingredient: true
-                }
-              }
-            },
-            orderBy: {
-              price: 'asc'
-            }
+      // Delete existing portions (cascade will handle ingredients)
+      await prisma.foodItemPortion.deleteMany({
+        where: { foodItemId: id }
+      });
+
+      // Create new portions with ingredients
+      for (const portion of portions) {
+        const foodItemPortion = await prisma.foodItemPortion.create({
+          data: {
+            foodItemId: id,
+            portionId: portion.portionId,
+            price: parseFloat(portion.price)
+          }
+        });
+
+        // Create ingredients for this portion if provided
+        if (portion.ingredients && Array.isArray(portion.ingredients) && portion.ingredients.length > 0) {
+          const validIngredients = portion.ingredients.filter((ing: any) => ing.ingredientId && ing.quantity && ing.quantity > 0);
+          
+          if (validIngredients.length > 0) {
+            await prisma.foodItemPortionIngredient.createMany({
+              data: validIngredients.map((ingredient: any) => ({
+                foodItemPortionId: foodItemPortion.id,
+                ingredientId: ingredient.ingredientId,
+                quantity: parseFloat(ingredient.quantity)
+              }))
+            });
           }
         }
-      });
+      }
+    }
+
+    // Step 3: Return the complete food item with relations
+    const foodItem = await prisma.foodItem.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        foodItemPortions: {
+          include: {
+            portion: true,
+            ingredients: {
+              include: {
+                ingredient: true
+              }
+            }
+          },
+          orderBy: {
+            price: 'asc'
+          }
+        }
+      }
     });
 
     return NextResponse.json(foodItem);
