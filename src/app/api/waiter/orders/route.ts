@@ -39,121 +39,132 @@ export async function POST(request: NextRequest) {
       customerId = customerData.customerId;
     }
 
-    // Calculate total amount and create order with items in a transaction
-    const order = await prisma.$transaction(async (tx) => {
-      let totalAmount = 0;
-      const orderItemsData = [];
-      const ingredientReductions = new Map(); // Track ingredient quantity reductions
+    // Calculate total amount and create order with items (serverless-friendly approach)
+    let totalAmount = 0;
+    const orderItemsData = [];
+    const ingredientReductions = new Map(); // Track ingredient quantity reductions
 
-      // Validate each item, calculate total, and check inventory
-      for (const item of items) {
-        const foodItemPortion = await tx.foodItemPortion.findFirst({
-          where: {
-            foodItemId: item.foodItemId,
-            portionId: item.portionId,
-          },
-          include: {
-            foodItem: true,
-            portion: true,
-            ingredients: {
-              include: {
-                ingredient: true,
-              },
-            },
-          },
-        });
-
-        if (!foodItemPortion) {
-          throw new Error(`Invalid food item and portion combination: ${item.foodItemId}, ${item.portionId}`);
-        }
-
-        // Check if food item is active
-        if (!foodItemPortion.foodItem.isActive) {
-          throw new Error(`Food item "${foodItemPortion.foodItem.name}" is currently disabled and cannot be ordered`);
-        }
-
-        // Check if portion is active
-        if (!foodItemPortion.portion.isActive) {
-          throw new Error(`Portion "${foodItemPortion.portion.name}" for "${foodItemPortion.foodItem.name}" is currently disabled`);
-        }
-
-        // Calculate ingredient requirements for this order item
-        for (const portionIngredient of foodItemPortion.ingredients) {
-          const requiredQuantity = portionIngredient.quantity * item.quantity;
-          const ingredientId = portionIngredient.ingredientId;
-          
-          // Add to total required quantity for this ingredient
-          if (ingredientReductions.has(ingredientId)) {
-            ingredientReductions.set(ingredientId, ingredientReductions.get(ingredientId) + requiredQuantity);
-          } else {
-            ingredientReductions.set(ingredientId, requiredQuantity);
-          }
-        }
-
-        const itemTotal = foodItemPortion.price * item.quantity;
-        totalAmount += itemTotal;
-
-        orderItemsData.push({
+    // Step 1: Validate each item, calculate total, and check inventory
+    for (const item of items) {
+      const foodItemPortion = await prisma.foodItemPortion.findFirst({
+        where: {
           foodItemId: item.foodItemId,
           portionId: item.portionId,
-          quantity: item.quantity,
-          unitPrice: foodItemPortion.price,
-          totalPrice: itemTotal,
-          specialRequests: item.specialRequests || null,
-        });
-      }
-
-      // Check if there's sufficient inventory for all ingredients
-      for (const [ingredientId, requiredQuantity] of ingredientReductions) {
-        const ingredient = await tx.ingredient.findUnique({
-          where: { id: ingredientId },
-        });
-
-        if (!ingredient) {
-          throw new Error(`Ingredient not found: ${ingredientId}`);
-        }
-
-        if (ingredient.currentStockQuantity < requiredQuantity) {
-          throw new Error(`Insufficient inventory for ingredient "${ingredient.name}". Required: ${requiredQuantity} ${ingredient.unitOfMeasurement}, Available: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}`);
-        }
-      }
-
-      // Reduce ingredient stock
-      for (const [ingredientId, requiredQuantity] of ingredientReductions) {
-        await tx.ingredient.update({
-          where: { id: ingredientId },
-          data: {
-            currentStockQuantity: {
-              decrement: requiredQuantity,
+        },
+        include: {
+          foodItem: true,
+          portion: true,
+          ingredients: {
+            include: {
+              ingredient: true,
             },
           },
-        });
-      }
-
-      // Create the order
-      const newOrder = await tx.order.create({
-        data: {
-          tableNumber,
-          staffId,
-          customerId,
-          totalAmount,
-          notes: notes || null,
-          status: 'PENDING',
-          customerName: customerData?.name || null,
-          customerEmail: customerData?.email || null,
-          customerPhone: customerData?.phone || null,
         },
       });
 
-      // Create order items
-      await tx.orderItem.createMany({
-        data: orderItemsData.map(item => ({
-          ...item,
-          orderId: newOrder.id,
-        })),
+      if (!foodItemPortion) {
+        return NextResponse.json(
+          { error: `Invalid food item and portion combination: ${item.foodItemId}, ${item.portionId}` },
+          { status: 400 }
+        );
+      }
+
+      // Check if food item is active
+      if (!foodItemPortion.foodItem.isActive) {
+        return NextResponse.json(
+          { error: `Food item "${foodItemPortion.foodItem.name}" is currently disabled and cannot be ordered` },
+          { status: 400 }
+        );
+      }
+
+      // Check if portion is active
+      if (!foodItemPortion.portion.isActive) {
+        return NextResponse.json(
+          { error: `Portion "${foodItemPortion.portion.name}" for "${foodItemPortion.foodItem.name}" is currently disabled` },
+          { status: 400 }
+        );
+      }
+
+      // Calculate ingredient requirements for this order item
+      for (const portionIngredient of foodItemPortion.ingredients) {
+        const requiredQuantity = portionIngredient.quantity * item.quantity;
+        const ingredientId = portionIngredient.ingredientId;
+        
+        // Add to total required quantity for this ingredient
+        if (ingredientReductions.has(ingredientId)) {
+          ingredientReductions.set(ingredientId, ingredientReductions.get(ingredientId) + requiredQuantity);
+        } else {
+          ingredientReductions.set(ingredientId, requiredQuantity);
+        }
+      }
+
+      const itemTotal = foodItemPortion.price * item.quantity;
+      totalAmount += itemTotal;
+
+      orderItemsData.push({
+        foodItemId: item.foodItemId,
+        portionId: item.portionId,
+        quantity: item.quantity,
+        unitPrice: foodItemPortion.price,
+        totalPrice: itemTotal,
+        specialRequests: item.specialRequests || null,
+      });
+    }
+
+    // Step 2: Check if there's sufficient inventory for all ingredients
+    for (const [ingredientId, requiredQuantity] of ingredientReductions) {
+      const ingredient = await prisma.ingredient.findUnique({
+        where: { id: ingredientId },
       });
 
-      return newOrder;
+      if (!ingredient) {
+        return NextResponse.json(
+          { error: `Ingredient not found: ${ingredientId}` },
+          { status: 400 }
+        );
+      }
+
+      if (ingredient.currentStockQuantity < requiredQuantity) {
+        return NextResponse.json(
+          { error: `Insufficient inventory for ingredient "${ingredient.name}". Required: ${requiredQuantity} ${ingredient.unitOfMeasurement}, Available: ${ingredient.currentStockQuantity} ${ingredient.unitOfMeasurement}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Step 3: Reduce ingredient stock
+    for (const [ingredientId, requiredQuantity] of ingredientReductions) {
+      await prisma.ingredient.update({
+        where: { id: ingredientId },
+        data: {
+          currentStockQuantity: {
+            decrement: requiredQuantity,
+          },
+        },
+      });
+    }
+
+    // Step 4: Create the order
+    const order = await prisma.order.create({
+      data: {
+        tableNumber,
+        staffId,
+        customerId,
+        totalAmount,
+        notes: notes || null,
+        status: 'PENDING',
+        customerName: customerData?.name || null,
+        customerEmail: customerData?.email || null,
+        customerPhone: customerData?.phone || null,
+      },
+    });
+
+    // Step 5: Create order items
+    await prisma.orderItem.createMany({
+      data: orderItemsData.map(item => ({
+        ...item,
+        orderId: order.id,
+      })),
     });
 
     // Create payment record if payment data is provided
@@ -222,22 +233,64 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating order:', error);
     
+    // Enhanced error logging for debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Check for specific Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as any;
+      console.error('Prisma error code:', prismaError.code);
+      console.error('Prisma error meta:', prismaError.meta);
+      
+      // Handle specific Prisma error codes
+      switch (prismaError.code) {
+        case 'P2002':
+          return NextResponse.json(
+            { error: 'A record with this data already exists' },
+            { status: 409 }
+          );
+        case 'P2003':
+          return NextResponse.json(
+            { error: 'Foreign key constraint failed - check if staff, customer, or items exist' },
+            { status: 400 }
+          );
+        case 'P2025':
+          return NextResponse.json(
+            { error: 'Required record not found' },
+            { status: 404 }
+          );
+        case 'P1001':
+          return NextResponse.json(
+            { error: 'Database connection failed - check DATABASE_URL' },
+            { status: 500 }
+          );
+        default:
+          return NextResponse.json(
+            { error: `Database error: ${prismaError.message || 'Unknown error'}` },
+            { status: 500 }
+          );
+      }
+    }
+    
     // Check if it's a database connection error
-    if (error instanceof Error && error.message.includes('DATABASE_URL')) {
+    if (error instanceof Error && (error.message.includes('DATABASE_URL') || error.message.includes('connect'))) {
       return NextResponse.json({ 
-        error: 'Database connection not configured. Please check your DATABASE_URL environment variable.' 
+        error: 'Database connection failed - check your environment variables' 
       }, { status: 500 });
     }
     
-    // Check if it's a Prisma client error
-    if (error instanceof Error && error.message.includes('prisma')) {
+    // Check if it's a transaction error
+    if (error instanceof Error && error.message.includes('Transaction')) {
       return NextResponse.json({ 
-        error: 'Database client error. Please ensure the database is running and accessible.' 
+        error: 'Order processing failed - please try again' 
       }, { status: 500 });
     }
     
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create order' },
+      { error: error instanceof Error ? `Server error: ${error.message}` : 'Failed to create order' },
       { status: 500 }
     );
   }
