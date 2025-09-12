@@ -153,8 +153,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(foodItem, { status: 201 });
   } catch (error) {
     console.error('Error creating food item:', error);
+    
+    // Enhanced error logging for debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Check for specific Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as any;
+      console.error('Prisma error code:', prismaError.code);
+      console.error('Prisma error meta:', prismaError.meta);
+      
+      // Handle specific Prisma error codes
+      switch (prismaError.code) {
+        case 'P2002':
+          return NextResponse.json(
+            { error: 'A record with this data already exists' },
+            { status: 409 }
+          );
+        case 'P2003':
+          return NextResponse.json(
+            { error: 'Foreign key constraint failed - check if category or portions exist' },
+            { status: 400 }
+          );
+        case 'P2025':
+          return NextResponse.json(
+            { error: 'Required record not found' },
+            { status: 404 }
+          );
+        case 'P1001':
+          return NextResponse.json(
+            { error: 'Database connection failed - check DATABASE_URL' },
+            { status: 500 }
+          );
+        default:
+          return NextResponse.json(
+            { error: `Database error: ${prismaError.message || 'Unknown error'}` },
+            { status: 500 }
+          );
+      }
+    }
+    
+    // Check for database connection issues
+    if (error instanceof Error && error.message.includes('connect')) {
+      return NextResponse.json(
+        { error: 'Database connection failed - check your environment variables' },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create food item' },
+      { error: error instanceof Error ? `Server error: ${error.message}` : 'Failed to create food item' },
       { status: 500 }
     );
   }
