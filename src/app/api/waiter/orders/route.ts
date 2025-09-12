@@ -67,6 +67,16 @@ export async function POST(request: NextRequest) {
           throw new Error(`Invalid food item and portion combination: ${item.foodItemId}, ${item.portionId}`);
         }
 
+        // Check if food item is active
+        if (!foodItemPortion.foodItem.isActive) {
+          throw new Error(`Food item "${foodItemPortion.foodItem.name}" is currently disabled and cannot be ordered`);
+        }
+
+        // Check if portion is active
+        if (!foodItemPortion.portion.isActive) {
+          throw new Error(`Portion "${foodItemPortion.portion.name}" for "${foodItemPortion.foodItem.name}" is currently disabled`);
+        }
+
         // Calculate ingredient requirements for this order item
         for (const portionIngredient of foodItemPortion.ingredients) {
           const requiredQuantity = portionIngredient.quantity * item.quantity;
