@@ -66,61 +66,62 @@ export async function PUT(
       }
     }
 
-    // Update food item in a transaction
-    const foodItem = await prisma.$transaction(async (tx) => {
-      const updateData: any = {};
-      
-      if (name !== undefined) updateData.name = name;
-      if (description !== undefined) updateData.description = description || null;
-      if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
-      if (categoryId !== undefined) updateData.categoryId = categoryId;
-      if (isActive !== undefined) updateData.isActive = isActive;
+    // Update food item (serverless-friendly approach)
+    const updateData: any = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description || null;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
-      // Update the food item
-      const updatedFoodItem = await tx.foodItem.update({
-        where: { id },
-        data: updateData
-      });
+    // Step 1: Update the food item
+    const updatedFoodItem = await prisma.foodItem.update({
+      where: { id },
+      data: updateData
+    });
 
-      // If portions are provided, update them
-      if (portions && Array.isArray(portions) && portions.length > 0) {
-        // Validate portions
-        for (const portion of portions) {
-          if (!portion.portionId || !portion.price || portion.price <= 0) {
-            throw new Error('Each portion must have a valid portionId and positive price');
-          }
+    // Step 2: If portions are provided, update them
+    if (portions && Array.isArray(portions) && portions.length > 0) {
+      // Validate portions
+      for (const portion of portions) {
+        if (!portion.portionId || !portion.price || portion.price <= 0) {
+          return NextResponse.json(
+            { error: 'Each portion must have a valid portionId and positive price' },
+            { status: 400 }
+          );
         }
-
-        // Delete existing portions
-        await tx.foodItemPortion.deleteMany({
-          where: { foodItemId: id }
-        });
-
-        // Create new portions
-        await tx.foodItemPortion.createMany({
-          data: portions.map(portion => ({
-            foodItemId: id,
-            portionId: portion.portionId,
-            price: parseFloat(portion.price)
-          }))
-        });
       }
 
-      // Return the complete food item with relations
-      return await tx.foodItem.findUnique({
-        where: { id },
-        include: {
-          category: true,
-          foodItemPortions: {
-            include: {
-              portion: true
-            },
-            orderBy: {
-              price: 'asc'
-            }
+      // Delete existing portions
+      await prisma.foodItemPortion.deleteMany({
+        where: { foodItemId: id }
+      });
+
+      // Create new portions
+      await prisma.foodItemPortion.createMany({
+        data: portions.map(portion => ({
+          foodItemId: id,
+          portionId: portion.portionId,
+          price: parseFloat(portion.price)
+        }))
+      });
+    }
+
+    // Step 3: Return the complete food item with relations
+    const foodItem = await prisma.foodItem.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        foodItemPortions: {
+          include: {
+            portion: true
+          },
+          orderBy: {
+            price: 'asc'
           }
         }
-      });
+      }
     });
 
     return NextResponse.json({
