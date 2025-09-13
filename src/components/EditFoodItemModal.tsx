@@ -373,6 +373,11 @@ export default function EditFoodItemModal({ isOpen, onClose, foodItem, onFoodIte
           throw new Error(`Portion ${i + 1}: Please enter a valid price greater than 0`);
         }
         
+        // Validate that each portion has at least one ingredient
+        if (!portion.ingredients || portion.ingredients.length === 0) {
+          throw new Error(`Portion ${i + 1}: At least one ingredient is required for each portion`);
+        }
+        
         // Validate ingredients for this portion
         for (let j = 0; j < portion.ingredients.length; j++) {
           const ingredient = portion.ingredients[j];

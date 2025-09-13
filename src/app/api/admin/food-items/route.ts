@@ -57,6 +57,24 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      
+      // Validate that each portion has at least one ingredient
+      if (!portion.ingredients || !Array.isArray(portion.ingredients) || portion.ingredients.length === 0) {
+        return NextResponse.json(
+          { error: 'Each portion must have at least one ingredient' },
+          { status: 400 }
+        );
+      }
+      
+      // Validate that each ingredient has required fields
+      for (const ingredient of portion.ingredients) {
+        if (!ingredient.ingredientId || !ingredient.quantity || ingredient.quantity <= 0) {
+          return NextResponse.json(
+            { error: 'Each ingredient must have a valid ingredientId and positive quantity' },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Check if category exists
@@ -277,6 +295,24 @@ export async function PUT(request: NextRequest) {
             { error: 'Each portion must have a valid portionId and positive price' },
             { status: 400 }
           );
+        }
+        
+        // Validate that each portion has at least one ingredient
+        if (!portion.ingredients || !Array.isArray(portion.ingredients) || portion.ingredients.length === 0) {
+          return NextResponse.json(
+            { error: 'Each portion must have at least one ingredient' },
+            { status: 400 }
+          );
+        }
+        
+        // Validate that each ingredient has required fields
+        for (const ingredient of portion.ingredients) {
+          if (!ingredient.ingredientId || !ingredient.quantity || ingredient.quantity <= 0) {
+            return NextResponse.json(
+              { error: 'Each ingredient must have a valid ingredientId and positive quantity' },
+              { status: 400 }
+            );
+          }
         }
       }
 
