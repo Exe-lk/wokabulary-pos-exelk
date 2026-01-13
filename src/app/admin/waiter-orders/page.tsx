@@ -66,6 +66,7 @@ interface PaymentData {
   receivedAmount: number;
   balance: number;
   paymentMode: 'CASH' | 'CARD';
+  referenceNumber?: string;
 }
 
 export default function WaiterOrdersPage() {

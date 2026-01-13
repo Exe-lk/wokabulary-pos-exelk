@@ -24,6 +24,7 @@ interface PaymentData {
   receivedAmount: number;
   balance: number;
   paymentMode: 'CASH' | 'CARD';
+  referenceNumber?: string;
 }
 
 interface ExistingCustomer {
@@ -39,6 +40,7 @@ interface FormValues {
   phone: string;
   paymentMode: 'CASH' | 'CARD';
   receivedAmount: number;
+  referenceNumber: string;
 }
 
 export default function CustomerDetailsModal({ 
@@ -78,6 +80,11 @@ export default function CustomerDetailsModal({
     // Received amount validation
     if (!values.receivedAmount || values.receivedAmount < totalAmount) {
       errors.receivedAmount = `Amount received must be at least Rs. ${totalAmount.toFixed(2)}`;
+    }
+
+    // Reference number validation for card payments
+    if (values.paymentMode === 'CARD' && !values.referenceNumber?.trim()) {
+      errors.referenceNumber = 'Reference number is required for card payments';
     }
 
     return errors;
@@ -124,7 +131,8 @@ export default function CustomerDetailsModal({
     const paymentData: PaymentData = {
       receivedAmount: values.receivedAmount,
       balance: Math.max(0, values.receivedAmount - totalAmount),
-      paymentMode: values.paymentMode
+      paymentMode: values.paymentMode,
+      referenceNumber: values.paymentMode === 'CARD' ? values.referenceNumber : undefined
     };
 
     onConfirm(customerData, paymentData);
@@ -135,7 +143,8 @@ export default function CustomerDetailsModal({
     email: '',
     phone: '',
     paymentMode: 'CASH',
-    receivedAmount: totalAmount
+    receivedAmount: totalAmount,
+    referenceNumber: ''
   };
 
   if (!isOpen) return null;
@@ -310,6 +319,28 @@ export default function CustomerDetailsModal({
                   </div>
                   <ErrorMessage name="receivedAmount" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
+
+                {/* Reference Number - Only show for CARD payment */}
+                {values.paymentMode === 'CARD' && (
+                  <div className="mb-4">
+                    <label htmlFor="referenceNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                      Reference Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Field
+                        type="text"
+                        id="referenceNumber"
+                        name="referenceNumber"
+                        className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.referenceNumber && touched.referenceNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter card reference number"
+                      />
+                    </div>
+                    <ErrorMessage name="referenceNumber" component="div" className="text-red-500 text-sm mt-1" />
+                  </div>
+                )}
 
                 {/* Balance */}
                 {values.receivedAmount > totalAmount && (

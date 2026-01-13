@@ -192,18 +192,19 @@ model OrderItem {
 }
 
 model Payment {
-  id             String      @id @default(cuid())
-  orderId        Int
-  customerId     String
-  amount         Float
-  receivedAmount Float
-  balance        Float
-  paymentDate    DateTime    @default(now())
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  paymentMode    PaymentMode
-  customer       Customer    @relation(fields: [customerId], references: [id])
-  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id              String      @id @default(cuid())
+  orderId         Int
+  customerId      String
+  amount          Float
+  receivedAmount  Float
+  balance         Float
+  paymentDate     DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  paymentMode     PaymentMode
+  referenceNumber String?
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
