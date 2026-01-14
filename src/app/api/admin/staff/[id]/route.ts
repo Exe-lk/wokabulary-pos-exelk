@@ -4,10 +4,10 @@ import { prisma } from '@/lib/prisma';
 // Update a staff member
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, email, role, phone, isActive } = body;
 
@@ -129,10 +129,10 @@ export async function PUT(
 // Delete a staff member
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check if staff member exists
     const existingStaff = await prisma.staff.findUnique({
