@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// POST /api/waiter/orders - Create a new order
+// POST /api/cashier/quick-bill - Create a quick bill without table number or kitchen status
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tableNumber, staffId, items, notes, customerData, paymentData } = body;
+    const { staffId, items, notes, customerData, paymentData, orderType } = body;
 
-    if (!tableNumber || !staffId || !items || !Array.isArray(items) || items.length === 0) {
+    if (!staffId || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
-        { error: 'Table number, staff ID, and at least one item are required' },
+        { error: 'Staff ID and at least one item are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!customerData || !customerData.name || !customerData.phone) {
+      return NextResponse.json(
+        { error: 'Customer name and phone are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!paymentData) {
+      return NextResponse.json(
+        { error: 'Payment data is required' },
         { status: 400 }
       );
     }
@@ -24,9 +38,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Handle customer creation outside transaction first if needed
+    // Handle customer creation
     let customerId = null;
-    if (customerData && customerData.isNewCustomer) {
+    if (customerData.isNewCustomer) {
       const newCustomer = await prisma.customer.create({
         data: {
           name: customerData.name,
@@ -35,14 +49,31 @@ export async function POST(request: NextRequest) {
         },
       });
       customerId = newCustomer.id;
-    } else if (customerData) {
+    } else if (customerData.customerId) {
       customerId = customerData.customerId;
+    } else {
+      // Try to find existing customer by phone
+      const existingCustomer = await prisma.customer.findUnique({
+        where: { phone: customerData.phone },
+      });
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const newCustomer = await prisma.customer.create({
+          data: {
+            name: customerData.name,
+            email: customerData.email || null,
+            phone: customerData.phone,
+          },
+        });
+        customerId = newCustomer.id;
+      }
     }
 
-    // Calculate total amount and create order with items (serverless-friendly approach)
+    // Calculate total amount and create order with items
     let totalAmount = 0;
     const orderItemsData = [];
-    const ingredientReductions = new Map(); // Track ingredient quantity reductions
+    const ingredientReductions = new Map();
 
     // Step 1: Validate each item, calculate total, and check inventory
     for (const item of items) {
@@ -69,15 +100,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check if food item is active
       if (!foodItemPortion.foodItem.isActive) {
         return NextResponse.json(
-          { error: `Food item "${foodItemPortion.foodItem.name}" is currently disabled and cannot be ordered` },
+          { error: `Food item "${foodItemPortion.foodItem.name}" is currently disabled` },
           { status: 400 }
         );
       }
 
-      // Check if portion is active
       if (!foodItemPortion.portion.isActive) {
         return NextResponse.json(
           { error: `Portion "${foodItemPortion.portion.name}" for "${foodItemPortion.foodItem.name}" is currently disabled` },
@@ -85,12 +114,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Calculate ingredient requirements for this order item
+      // Calculate ingredient requirements
       for (const portionIngredient of foodItemPortion.ingredients) {
         const requiredQuantity = portionIngredient.quantity * item.quantity;
         const ingredientId = portionIngredient.ingredientId;
         
-        // Add to total required quantity for this ingredient
         if (ingredientReductions.has(ingredientId)) {
           ingredientReductions.set(ingredientId, ingredientReductions.get(ingredientId) + requiredQuantity);
         } else {
@@ -144,18 +172,83 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Step 4: Create the order
+    // Generate bill number
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const billNumber = `BILL-${dateStr}-${randomNum}`;
+
+    // Verify staff exists or find/create for admin
+    let staff = await prisma.staff.findUnique({
+      where: { id: staffId },
+    });
+
+    let finalStaffId = staffId;
+
+    // If staff not found, check if it's an admin user
+    if (!staff) {
+      const admin = await prisma.admin.findUnique({
+        where: { id: staffId },
+      });
+
+      if (admin) {
+        // Find or create a staff record for this admin
+        // First try to find by email
+        staff = await prisma.staff.findUnique({
+          where: { email: admin.email },
+        });
+
+        // If no staff found, create one for the admin
+        if (!staff) {
+          // We need a supabaseId for staff, but admin doesn't have one
+          // Create a dummy supabaseId or use a different approach
+          // For now, let's use the admin ID as a prefix
+          const dummySupabaseId = `admin_${admin.id}`;
+          
+          // Check if staff with this supabaseId exists
+          staff = await prisma.staff.findUnique({
+            where: { supabaseId: dummySupabaseId },
+          });
+
+          if (!staff) {
+            // Create staff record for admin
+            staff = await prisma.staff.create({
+              data: {
+                email: admin.email,
+                name: admin.name,
+                role: 'CASHIER', // Default role for admin-created bills
+                supabaseId: dummySupabaseId,
+                isActive: true,
+              },
+            });
+          }
+        }
+        // Update finalStaffId to use the staff record
+        finalStaffId = staff.id;
+      } else {
+        return NextResponse.json(
+          { error: 'Staff member or admin not found' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Step 4: Create the order (status COMPLETED for quick bills, no table number)
     const order = await prisma.order.create({
       data: {
-        tableNumber,
-        staffId,
-        customerId,
+        tableNumber: null as any, // Quick bills don't have table numbers
+        staffId: finalStaffId,
+        customerId: customerId || null,
         totalAmount,
         notes: notes || null,
-        status: 'PENDING',
-        customerName: customerData?.name || null,
-        customerEmail: customerData?.email || null,
-        customerPhone: customerData?.phone || null,
+        status: 'COMPLETED', // Quick bills are immediately completed
+        customerName: customerData.name,
+        customerEmail: customerData.email || null,
+        customerPhone: customerData.phone,
+        billNumber,
+        orderType: orderType || 'TAKEAWAY',
       },
     });
 
@@ -167,8 +260,8 @@ export async function POST(request: NextRequest) {
       })),
     });
 
-    // Create payment record if payment data is provided
-    if (paymentData && customerId) {
+    // Step 6: Create payment record
+    if (customerId && paymentData) {
       await prisma.payment.create({
         data: {
           orderId: order.id,
@@ -225,6 +318,8 @@ export async function POST(request: NextRequest) {
             receivedAmount: true,
             balance: true,
             paymentDate: true,
+            paymentMode: true,
+            referenceNumber: true,
           },
         },
       },
@@ -232,21 +327,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(completeOrder, { status: 201 });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('Error creating quick bill:', error);
     
-    // Enhanced error logging for debugging
     if (error instanceof Error) {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
     }
     
-    // Check for specific Prisma errors
     if (error && typeof error === 'object' && 'code' in error) {
       const prismaError = error as any;
       console.error('Prisma error code:', prismaError.code);
-      console.error('Prisma error meta:', prismaError.meta);
       
-      // Handle specific Prisma error codes
       switch (prismaError.code) {
         case 'P2002':
           return NextResponse.json(
@@ -263,11 +354,6 @@ export async function POST(request: NextRequest) {
             { error: 'Required record not found' },
             { status: 404 }
           );
-        case 'P1001':
-          return NextResponse.json(
-            { error: 'Database connection failed - check DATABASE_URL' },
-            { status: 500 }
-          );
         default:
           return NextResponse.json(
             { error: `Database error: ${prismaError.message || 'Unknown error'}` },
@@ -276,105 +362,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Check if it's a database connection error
-    if (error instanceof Error && (error.message.includes('DATABASE_URL') || error.message.includes('connect'))) {
-      return NextResponse.json({ 
-        error: 'Database connection failed - check your environment variables' 
-      }, { status: 500 });
-    }
-    
-    // Check if it's a transaction error
-    if (error instanceof Error && error.message.includes('Transaction')) {
-      return NextResponse.json({ 
-        error: 'Order processing failed - please try again' 
-      }, { status: 500 });
-    }
-    
     return NextResponse.json(
-      { error: error instanceof Error ? `Server error: ${error.message}` : 'Failed to create order' },
+      { error: error instanceof Error ? `Server error: ${error.message}` : 'Failed to create quick bill' },
       { status: 500 }
     );
   }
 }
-
-// GET /api/waiter/orders - Get orders for a staff member
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const staffId = searchParams.get('staffId');
-    const status = searchParams.get('status');
-
-    if (!staffId) {
-      return NextResponse.json(
-        { error: 'Staff ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const whereClause: any = { staffId };
-    if (status) {
-      whereClause.status = status;
-    }
-
-    const orders = await prisma.order.findMany({
-      where: whereClause,
-      include: {
-        orderItems: {
-          include: {
-            foodItem: true,
-            portion: true,
-          },
-        },
-        staff: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-          },
-        },
-        payments: {
-          select: {
-            id: true,
-            paymentMode: true,
-            receivedAmount: true,
-            balance: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return NextResponse.json(orders);
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    
-    // Check if it's a database connection error
-    if (error instanceof Error && error.message.includes('DATABASE_URL')) {
-      return NextResponse.json({ 
-        error: 'Database connection not configured. Please check your DATABASE_URL environment variable.' 
-      }, { status: 500 });
-    }
-    
-    // Check if it's a Prisma client error
-    if (error instanceof Error && error.message.includes('prisma')) {
-      return NextResponse.json({ 
-        error: 'Database client error. Please ensure the database is running and accessible.' 
-      }, { status: 500 });
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch orders' },
-      { status: 500 }
-    );
-  }
-} 

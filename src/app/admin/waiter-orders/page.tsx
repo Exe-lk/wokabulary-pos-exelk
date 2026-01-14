@@ -10,7 +10,9 @@ import CategoryTabs from '@/components/waiter/CategoryTabs';
 import FoodItemCard from '@/components/waiter/FoodItemCard';
 import OrderCart from '@/components/waiter/OrderCart';
 import OrdersList from '@/components/waiter/OrdersList';
+import AdminOrdersList from '@/components/waiter/AdminOrdersList';
 import CustomerDetailsModal from '@/components/waiter/CustomerDetailsModal';
+import QuickBillModal from '@/components/waiter/QuickBillModal';
 
 interface AdminUser {
   id: string;
@@ -66,6 +68,7 @@ interface PaymentData {
   receivedAmount: number;
   balance: number;
   paymentMode: 'CASH' | 'CARD';
+  referenceNumber?: string;
 }
 
 export default function WaiterOrdersPage() {
@@ -85,6 +88,10 @@ export default function WaiterOrdersPage() {
 
   // Customer details modal state
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  
+  // Quick bill modal state
+  const [showQuickBillModal, setShowQuickBillModal] = useState(false);
+  const [isCreatingQuickBill, setIsCreatingQuickBill] = useState(false);
 
   useEffect(() => {
     // Check if admin is logged in
@@ -141,16 +148,25 @@ export default function WaiterOrdersPage() {
     setShowCustomerModal(true);
   };
 
-  const handleCustomerModalConfirm = async (customerData: CustomerData, paymentData: PaymentData) => {
+  const handleCustomerModalConfirm = async (customerData: CustomerData, paymentData: PaymentData, waiterId?: string) => {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
+      return;
+    }
+
+    // If admin/cashier is placing order, they must select a waiter
+    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin') && !waiterId) {
+      showErrorAlert('Please select a waiter for this order');
       return;
     }
 
     setIsPlacingOrder(true);
     try {
+      // Use waiterId if provided (for admin/cashier), otherwise use adminUser.id
+      const finalStaffId = waiterId || adminUser.id;
+
       const orderData = {
         tableNumber: orderState.tableNumber,
-        staffId: adminUser.id,
+        staffId: finalStaffId,
         items: orderState.items.map(item => ({
           foodItemId: item.foodItemId,
           portionId: item.portionId,
@@ -193,6 +209,55 @@ export default function WaiterOrdersPage() {
 
   const handleCustomerModalClose = () => {
     setShowCustomerModal(false);
+  };
+
+  const handleQuickBillConfirm = async (orderData: any) => {
+    if (!adminUser) {
+      return;
+    }
+
+    setIsCreatingQuickBill(true);
+    try {
+      const response = await fetch('/api/cashier/quick-bill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          staffId: adminUser.id,
+          items: orderData.items,
+          notes: orderData.notes,
+          customerData: orderData.customerData,
+          paymentData: orderData.paymentData,
+          orderType: orderData.orderType,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create quick bill');
+      }
+
+      const newOrder = await response.json();
+
+      // Show success message
+      const paymentModeText = orderData.paymentData.paymentMode === 'CASH' ? 'Cash' : 'Card';
+      const balanceText = orderData.paymentData.balance > 0 ? ` (Balance: Rs. ${orderData.paymentData.balance.toFixed(2)})` : '';
+      const refText = orderData.paymentData.referenceNumber ? ` (Ref: ${orderData.paymentData.referenceNumber})` : '';
+      showSuccessAlert(`Quick bill created successfully! Bill #${newOrder.billNumber}. Payment: ${paymentModeText}${refText}${balanceText}`);
+      
+      setShowQuickBillModal(false);
+      
+      // Optionally redirect to bill page
+      if (newOrder.id) {
+        window.open(`/bill/${newOrder.id}`, '_blank');
+      }
+
+    } catch (error: any) {
+      showErrorAlert(`Failed to create quick bill: ${error.message}`);
+    } finally {
+      setIsCreatingQuickBill(false);
+    }
   };
 
   // if (isLoading) {
@@ -329,6 +394,17 @@ export default function WaiterOrdersPage() {
               <p className="text-sm text-gray-500 mt-1">Place new orders and view order history</p>
             </div>
             <div className="flex items-center space-x-4">
+              {adminUser && (adminUser.role === 'CASHIER' || adminUser.role === 'admin') && (
+                <button
+                  onClick={() => setShowQuickBillModal(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Create Bill
+                </button>
+              )}
               <button
                 onClick={fetchFoodItems}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
@@ -368,7 +444,13 @@ export default function WaiterOrdersPage() {
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'place-order' && <PlaceOrderContent />}
-        {activeTab === 'my-orders' && adminUser && <OrdersList staffId={adminUser.id} />}
+        {activeTab === 'my-orders' && adminUser && (
+          (adminUser.role === 'CASHIER' || adminUser.role === 'admin') ? (
+            <AdminOrdersList userRole={adminUser.role} />
+          ) : (
+            <OrdersList staffId={adminUser.id} />
+          )
+        )}
       </div>
 
       {/* Customer Details Modal */}
@@ -378,7 +460,19 @@ export default function WaiterOrdersPage() {
         onConfirm={handleCustomerModalConfirm}
         totalAmount={orderState.totalAmount}
         isProcessing={isPlacingOrder}
+        showWaiterSelection={adminUser && (adminUser.role === 'CASHIER' || adminUser.role === 'admin')}
       />
+
+      {/* Quick Bill Modal */}
+      {adminUser && (adminUser.role === 'CASHIER' || adminUser.role === 'admin') && (
+        <QuickBillModal
+          isOpen={showQuickBillModal}
+          onClose={() => setShowQuickBillModal(false)}
+          onConfirm={handleQuickBillConfirm}
+          categorizedItems={categorizedItems}
+          isProcessing={isCreatingQuickBill}
+        />
+      )}
     </div>
   );
 } 

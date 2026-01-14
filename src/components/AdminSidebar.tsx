@@ -41,6 +41,7 @@ export default function AdminSidebar({
     {
       name: "Dashboard",
       href: "/admin/dashboard",
+      adminOnly: false,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002 2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
@@ -48,17 +49,19 @@ export default function AdminSidebar({
         </svg>
       ),
     },
-    // {
-    //   name: "Users",
-    //   href: "/admin/users",
-    //   icon: (
-    //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    //     </svg>
-    //   ),
-    // },
+    {
+      name: "User Management",
+      href: "/admin/users",
+      adminOnly: true,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+      ),
+    },
     {
       name: "Ingredient Master",
+      adminOnly: false,
       href: "/admin/ingredientmaster",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +71,7 @@ export default function AdminSidebar({
     },
     {
       name: "Categories",
+      adminOnly: false,
       href: "/admin/categories",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,6 +81,7 @@ export default function AdminSidebar({
     },
     {
       name: "Portions",
+      adminOnly: false,
       href: "/admin/portions",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,6 +91,7 @@ export default function AdminSidebar({
     },
     {
       name: "Items",
+      adminOnly: false,
       href: "/admin/items",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,6 +110,7 @@ export default function AdminSidebar({
     // },
     {
       name: "Billing",
+      adminOnly: false,
       href: "/admin/waiter-orders",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,6 +120,7 @@ export default function AdminSidebar({
     },
     {
       name: "Orders",
+      adminOnly: false,
       href: "/admin/kitchen",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,6 +130,7 @@ export default function AdminSidebar({
     },
     {
       name: "Customers",
+      adminOnly: false,
       href: "/admin/customers",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,31 +258,33 @@ export default function AdminSidebar({
           {/* Navigation - Scrollable if needed */}
           <nav className="flex-1 overflow-y-auto px-2 py-4">
             <div className="space-y-1">
-              {navigationItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => router.push(item.href)}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${
-                      isActive
-                        ? 'bg-white/20 text-white shadow-lg border border-white/20'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
-                    }`}
-                    title={isCollapsed ? item.name : undefined}
-                  >
-                    <span className={`${isActive ? 'text-white' : 'text-white/70 group-hover:text-white'} transition-colors`}>
-                      {item.icon}
-                    </span>
-                    {!isCollapsed && (
-                      <span className="ml-3">{item.name}</span>
-                    )}
-                    {isActive && !isCollapsed && (
-                      <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
-                    )}
-                  </button>
-                );
-              })}
+              {navigationItems
+                .filter((item) => !item.adminOnly || userRole === 'admin')
+                .map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => router.push(item.href)}
+                      className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${
+                        isActive
+                          ? 'bg-white/20 text-white shadow-lg border border-white/20'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                      title={isCollapsed ? item.name : undefined}
+                    >
+                      <span className={`${isActive ? 'text-white' : 'text-white/70 group-hover:text-white'} transition-colors`}>
+                        {item.icon}
+                      </span>
+                      {!isCollapsed && (
+                        <span className="ml-3">{item.name}</span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           </nav>
 

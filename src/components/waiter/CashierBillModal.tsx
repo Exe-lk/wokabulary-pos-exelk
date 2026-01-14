@@ -3,22 +3,40 @@
 import { useState, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { X, User, Phone, Mail, CreditCard, DollarSign } from 'lucide-react';
+import { showSuccessAlert, showErrorAlert } from '@/lib/sweetalert';
 
-interface CustomerDetailsModalProps {
+interface CashierBillModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (customerData: CustomerData, paymentData: PaymentData, waiterId?: string) => void;
-  totalAmount: number;
-  isProcessing: boolean;
-  showWaiterSelection?: boolean;
-}
-
-interface CustomerData {
-  name: string;
-  email: string;
-  phone: string;
-  isNewCustomer: boolean;
-  customerId?: string;
+  order: {
+    id: number;
+    tableNumber: number | null;
+    totalAmount: number;
+    customerName: string | null;
+    customerEmail: string | null;
+    customerPhone: string | null;
+    customerId: string | null;
+    orderItems: Array<{
+      id: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      specialRequests: string | null;
+      foodItem: {
+        name: string;
+      };
+      portion: {
+        name: string;
+      };
+    }>;
+    customer?: {
+      id: string;
+      name: string;
+      phone: string;
+      email?: string;
+    };
+  };
+  onBillCompleted: () => void;
 }
 
 interface PaymentData {
@@ -28,84 +46,27 @@ interface PaymentData {
   referenceNumber?: string;
 }
 
-interface ExistingCustomer {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string;
-}
-
-interface Waiter {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 interface FormValues {
-  name: string;
-  email: string;
-  phone: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
   paymentMode: 'CASH' | 'CARD';
   receivedAmount: number;
   referenceNumber: string;
-  waiterId?: string;
 }
 
-export default function CustomerDetailsModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  totalAmount, 
-  isProcessing,
-  showWaiterSelection = false
-}: CustomerDetailsModalProps) {
+export default function CashierBillModal({ isOpen, onClose, order, onBillCompleted }: CashierBillModalProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [existingCustomer, setExistingCustomer] = useState<any>(null);
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
-  const [existingCustomer, setExistingCustomer] = useState<ExistingCustomer | null>(null);
-  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
-  const [waiters, setWaiters] = useState<Waiter[]>([]);
-  const [isLoadingWaiters, setIsLoadingWaiters] = useState(false);
 
-  // Validation function
-  const validateForm = (values: FormValues) => {
-    const errors: any = {};
-
-    // Phone validation
-    if (!values.phone) {
-      errors.phone = 'Phone number is required';
-    } else if (!/^[0-9]{10,}$/.test(values.phone.replace(/\s/g, ''))) {
-      errors.phone = 'Please enter a valid phone number (minimum 10 digits)';
+  useEffect(() => {
+    if (isOpen && order.customer) {
+      setExistingCustomer(order.customer);
+    } else {
+      setExistingCustomer(null);
     }
-
-    // Name validation
-    if (!values.name) {
-      errors.name = 'Customer name is required';
-    } else if (values.name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters long';
-    }
-
-    // Email validation (optional but validate if provided)
-    if (values.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Received amount validation
-    if (!values.receivedAmount || values.receivedAmount < totalAmount) {
-      errors.receivedAmount = `Amount received must be at least Rs. ${totalAmount.toFixed(2)}`;
-    }
-
-    // Reference number validation for card payments
-    if (values.paymentMode === 'CARD' && !values.referenceNumber?.trim()) {
-      errors.referenceNumber = 'Reference number is required for card payments';
-    }
-
-    // Waiter selection validation if needed
-    if (showWaiterSelection && !values.waiterId) {
-      errors.waiterId = 'Please select a waiter for this order';
-    }
-
-    return errors;
-  };
+  }, [isOpen, order.customer]);
 
   const handlePhoneChange = async (phone: string, setFieldValue: (field: string, value: any) => void) => {
     if (phone.length >= 10) {
@@ -116,13 +77,11 @@ export default function CustomerDetailsModal({
           const customer = await response.json();
           if (customer) {
             setExistingCustomer(customer);
-            setCustomerId(customer.id);
-            setFieldValue('name', customer.name);
-            setFieldValue('email', customer.email || '');
-            setFieldValue('phone', customer.phone);
+            setFieldValue('customerName', customer.name);
+            setFieldValue('customerEmail', customer.email || '');
+            setFieldValue('customerPhone', customer.phone);
           } else {
             setExistingCustomer(null);
-            setCustomerId(undefined);
           }
         }
       } catch (error) {
@@ -132,64 +91,159 @@ export default function CustomerDetailsModal({
       }
     } else {
       setExistingCustomer(null);
-      setCustomerId(undefined);
     }
   };
 
-  const handleSubmit = (values: FormValues) => {
-    const customerData: CustomerData = {
-      name: values.name,
-      email: values.email,
-      phone: values.phone,
-      isNewCustomer: !existingCustomer,
-      customerId: customerId
-    };
+  const validateForm = (values: FormValues) => {
+    const errors: any = {};
 
-    const paymentData: PaymentData = {
-      receivedAmount: values.receivedAmount,
-      balance: Math.max(0, values.receivedAmount - totalAmount),
-      paymentMode: values.paymentMode,
-      referenceNumber: values.paymentMode === 'CARD' ? values.referenceNumber : undefined
-    };
+    if (!values.customerPhone) {
+      errors.customerPhone = 'Phone number is required';
+    } else if (!/^[0-9]{10,}$/.test(values.customerPhone.replace(/\s/g, ''))) {
+      errors.customerPhone = 'Please enter a valid phone number (minimum 10 digits)';
+    }
 
-    onConfirm(customerData, paymentData, values.waiterId);
+    if (!values.customerName) {
+      errors.customerName = 'Customer name is required';
+    } else if (values.customerName.trim().length < 2) {
+      errors.customerName = 'Name must be at least 2 characters long';
+    }
+
+    if (values.customerEmail && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.customerEmail)) {
+      errors.customerEmail = 'Please enter a valid email address';
+    }
+
+    if (!values.receivedAmount || values.receivedAmount < order.totalAmount) {
+      errors.receivedAmount = `Amount received must be at least Rs. ${order.totalAmount.toFixed(2)}`;
+    }
+
+    if (values.paymentMode === 'CARD' && !values.referenceNumber?.trim()) {
+      errors.referenceNumber = 'Reference number is required for card payments';
+    }
+
+    return errors;
   };
 
-  // Fetch waiters when modal opens and waiter selection is needed
-  useEffect(() => {
-    if (isOpen && showWaiterSelection) {
-      setIsLoadingWaiters(true);
-      fetch('/api/admin/staff')
-        .then(res => res.json())
-        .then(data => {
-          const waiterList = data.filter((staff: any) => staff.role === 'WAITER' && staff.isActive);
-          setWaiters(waiterList);
-        })
-        .catch(err => console.error('Error fetching waiters:', err))
-        .finally(() => setIsLoadingWaiters(false));
+  const handleSubmit = async (values: FormValues) => {
+    setIsProcessing(true);
+    try {
+      // First, ensure customer exists or create one
+      let customerId = order.customerId;
+      if (!customerId) {
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+        } else {
+          // Create new customer
+          const customerResponse = await fetch('/api/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: values.customerName,
+              email: values.customerEmail || null,
+              phone: values.customerPhone,
+            }),
+          });
+          if (customerResponse.ok) {
+            const newCustomer = await customerResponse.json();
+            customerId = newCustomer.id;
+          }
+        }
+      }
+
+      // Generate bill number
+      const now = new Date();
+      const dateStr = now.getFullYear().toString() + 
+                     (now.getMonth() + 1).toString().padStart(2, '0') + 
+                     now.getDate().toString().padStart(2, '0');
+      const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      const billNumber = `BILL-${dateStr}-${randomNum}`;
+
+      // Create payment record
+      const paymentData: PaymentData = {
+        receivedAmount: values.receivedAmount,
+        balance: Math.max(0, values.receivedAmount - order.totalAmount),
+        paymentMode: values.paymentMode,
+        referenceNumber: values.paymentMode === 'CARD' ? values.referenceNumber : undefined,
+      };
+
+      if (!customerId) {
+        throw new Error('Customer ID is required');
+      }
+
+      // Create payment
+      const paymentResponse = await fetch('/api/cashier/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: order.id,
+          customerId: customerId,
+          amount: order.totalAmount,
+          receivedAmount: paymentData.receivedAmount,
+          balance: paymentData.balance,
+          paymentMode: paymentData.paymentMode,
+          referenceNumber: paymentData.referenceNumber,
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        throw new Error(errorData.error || 'Failed to process payment');
+      }
+
+      // Update order with customer info and bill number, mark as COMPLETED
+      const orderResponse = await fetch(`/api/orders/${order.id}/bill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: values.customerName,
+          customerEmail: values.customerEmail || null,
+          customerPhone: values.customerPhone,
+          billNumber,
+        }),
+      });
+
+      if (!orderResponse.ok) {
+        const errorData = await orderResponse.json();
+        throw new Error(errorData.error || 'Failed to complete bill');
+      }
+
+      const result = await orderResponse.json();
+
+      // Show success message
+      const paymentModeText = paymentData.paymentMode === 'CASH' ? 'Cash' : 'Card';
+      const balanceText = paymentData.balance > 0 ? ` (Balance: Rs. ${paymentData.balance.toFixed(2)})` : '';
+      const refText = paymentData.referenceNumber ? ` (Ref: ${paymentData.referenceNumber})` : '';
+      
+      showSuccessAlert(`Bill completed successfully! Bill #${billNumber}. Payment: ${paymentModeText}${refText}${balanceText}`);
+      
+      onBillCompleted();
+      onClose();
+    } catch (error: any) {
+      showErrorAlert(`Failed to complete bill: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
     }
-  }, [isOpen, showWaiterSelection]);
+  };
 
   const initialValues: FormValues = {
-    name: '',
-    email: '',
-    phone: '',
+    customerName: order.customerName || order.customer?.name || '',
+    customerEmail: order.customerEmail || order.customer?.email || '',
+    customerPhone: order.customerPhone || order.customer?.phone || '',
     paymentMode: 'CASH',
-    receivedAmount: totalAmount,
+    receivedAmount: order.totalAmount,
     referenceNumber: '',
-    waiterId: ''
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[95vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Customer Details</h2>
-            <p className="text-sm text-gray-600">Complete order for Rs. {totalAmount.toFixed(2)}</p>
+            <h2 className="text-xl font-semibold text-gray-900">Process Payment & Send Bill</h2>
+            <p className="text-sm text-gray-600">Order #{order.id} {order.tableNumber ? `- Table ${order.tableNumber}` : ''}</p>
           </div>
           <button
             onClick={onClose}
@@ -197,6 +251,27 @@ export default function CustomerDetailsModal({
           >
             <X className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Order Summary */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Order Summary</h3>
+          <div className="space-y-2">
+            {order.orderItems.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-gray-700">
+                  {item.foodItem.name} ({item.portion.name}) × {item.quantity}
+                </span>
+                <span className="font-medium">Rs. {item.totalPrice.toFixed(2)}</span>
+              </div>
+            ))}
+            <div className="pt-2 border-t border-gray-200">
+              <div className="flex justify-between font-semibold text-lg">
+                <span>Total</span>
+                <span>Rs. {order.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <Formik
@@ -213,17 +288,17 @@ export default function CustomerDetailsModal({
                 
                 {/* Phone Number */}
                 <div className="mb-4">
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Field
                       type="tel"
-                      id="phone"
-                      name="phone"
+                      id="customerPhone"
+                      name="customerPhone"
                       className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.phone && touched.phone ? 'border-red-500' : 'border-gray-300'
+                        errors.customerPhone && touched.customerPhone ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter phone number"
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -238,7 +313,7 @@ export default function CustomerDetailsModal({
                       </div>
                     )}
                   </div>
-                  <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
+                  <ErrorMessage name="customerPhone" component="div" className="text-red-500 text-sm mt-1" />
                   {existingCustomer && (
                     <p className="text-sm text-green-600 mt-1">
                       ✓ Existing customer found: {existingCustomer.name}
@@ -248,42 +323,42 @@ export default function CustomerDetailsModal({
 
                 {/* Customer Name */}
                 <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
                     Customer Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Field
                       type="text"
-                      id="name"
-                      name="name"
+                      id="customerName"
+                      name="customerName"
                       className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.name && touched.name ? 'border-red-500' : 'border-gray-300'
+                        errors.customerName && touched.customerName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter customer name"
                     />
                   </div>
-                  <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
+                  <ErrorMessage name="customerName" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
 
-                {/* Customer Email */}
+                {/* Email */}
                 <div className="mb-4">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 mb-1">
                     Email Address
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Field
                       type="email"
-                      id="email"
-                      name="email"
+                      id="customerEmail"
+                      name="customerEmail"
                       className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.email && touched.email ? 'border-red-500' : 'border-gray-300'
+                        errors.customerEmail && touched.customerEmail ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Enter email address"
                     />
                   </div>
-                  <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
+                  <ErrorMessage name="customerEmail" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
               </div>
 
@@ -291,13 +366,6 @@ export default function CustomerDetailsModal({
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
                 
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-700">Order Total:</span>
-                    <span className="font-medium">Rs. {totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
-
                 {/* Payment Mode */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -342,7 +410,7 @@ export default function CustomerDetailsModal({
                       type="number"
                       id="receivedAmount"
                       name="receivedAmount"
-                      min={totalAmount}
+                      min={order.totalAmount}
                       step="0.01"
                       className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.receivedAmount && touched.receivedAmount ? 'border-red-500' : 'border-gray-300'
@@ -376,60 +444,19 @@ export default function CustomerDetailsModal({
                 )}
 
                 {/* Balance */}
-                {values.receivedAmount > totalAmount && (
+                {values.receivedAmount > order.totalAmount && (
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Balance to Return
                     </label>
                     <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                       <span className="text-lg font-semibold text-green-700">
-                        Rs. {(values.receivedAmount - totalAmount).toFixed(2)}
+                        Rs. {(values.receivedAmount - order.totalAmount).toFixed(2)}
                       </span>
                     </div>
                   </div>
                 )}
               </div>
-
-              {/* Waiter Selection - Only show if showWaiterSelection is true */}
-              {showWaiterSelection && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Assign Waiter</h3>
-                  
-                  <div className="mb-4">
-                    <label htmlFor="waiterId" className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Waiter <span className="text-red-500">*</span>
-                    </label>
-                    {isLoadingWaiters ? (
-                      <div className="flex items-center justify-center p-4 border border-gray-300 rounded-lg">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                        <span className="text-sm text-gray-600">Loading waiters...</span>
-                      </div>
-                    ) : (
-                      <Field
-                        as="select"
-                        id="waiterId"
-                        name="waiterId"
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.waiterId && touched.waiterId ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <option value="">-- Select a waiter --</option>
-                        {waiters.map((waiter) => (
-                          <option key={waiter.id} value={waiter.id}>
-                            {waiter.name} ({waiter.email})
-                          </option>
-                        ))}
-                      </Field>
-                    )}
-                    <ErrorMessage name="waiterId" component="div" className="text-red-500 text-sm mt-1" />
-                    {waiters.length === 0 && !isLoadingWaiters && (
-                      <p className="text-sm text-yellow-600 mt-1">
-                        ⚠️ No active waiters found. Please create a waiter first.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="flex space-x-3">
@@ -451,7 +478,7 @@ export default function CustomerDetailsModal({
                       Processing...
                     </>
                   ) : (
-                    'Place Order'
+                    'Complete Bill & Send'
                   )}
                 </button>
               </div>

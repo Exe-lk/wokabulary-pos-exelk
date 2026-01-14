@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Download, MapPin, Phone, Mail, Clock, User, CreditCard } from 'lucide-react';
+import { Download, MapPin, Phone, Mail, Clock, User, CreditCard, DollarSign } from 'lucide-react';
 import Image from 'next/image';
 
 interface OrderItem {
@@ -20,13 +20,24 @@ interface OrderItem {
   };
 }
 
+interface Payment {
+  id: string;
+  amount: number;
+  receivedAmount: number;
+  balance: number;
+  paymentDate: string;
+  paymentMode: 'CASH' | 'CARD';
+  referenceNumber: string | null;
+}
+
 interface Order {
   id: number;
-  tableNumber: number;
+  tableNumber: number | null;
   totalAmount: number;
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
+  billNumber: string | null;
   createdAt: string;
   updatedAt: string;
   staff: {
@@ -34,6 +45,7 @@ interface Order {
     email: string;
   };
   orderItems: OrderItem[];
+  payments?: Payment[];
 }
 
 export default function BillPage() {
@@ -199,10 +211,18 @@ export default function BillPage() {
               <div className="flex-1">
                 <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">BILL #{order.id}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs sm:text-sm">
-                  <p className="flex items-center text-gray-700">
-                    <MapPin className="w-3 h-3 mr-2 flex-shrink-0" />
-                    <span>Table {order.tableNumber}</span>
-                  </p>
+                  {order.tableNumber && (
+                    <p className="flex items-center text-gray-700">
+                      <MapPin className="w-3 h-3 mr-2 flex-shrink-0" />
+                      <span>Table {order.tableNumber}</span>
+                    </p>
+                  )}
+                  {order.billNumber && (
+                    <p className="flex items-center text-gray-700">
+                      <CreditCard className="w-3 h-3 mr-2 flex-shrink-0" />
+                      <span>Bill {order.billNumber}</span>
+                    </p>
+                  )}
                   <p className="flex items-center text-gray-700">
                     <Clock className="w-3 h-3 mr-2 flex-shrink-0" />
                     <span>{formatDate(order.createdAt)}</span>
@@ -309,6 +329,46 @@ export default function BillPage() {
                 </table>
               </div>
             </div>
+
+            {/* Payment Information */}
+            {order.payments && order.payments.length > 0 && (
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">Payment Information</h3>
+                {order.payments.map((payment) => (
+                  <div key={payment.id} className="bg-gray-50 p-3 rounded-lg mb-2">
+                    <div className="space-y-1 text-xs sm:text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Payment Mode:</span>
+                        <span className="font-medium flex items-center">
+                          {payment.paymentMode === 'CARD' ? (
+                            <CreditCard className="w-3 h-3 mr-1" />
+                          ) : (
+                            <DollarSign className="w-3 h-3 mr-1" />
+                          )}
+                          {payment.paymentMode}
+                        </span>
+                      </div>
+                      {payment.referenceNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Reference Number:</span>
+                          <span className="font-medium">{payment.referenceNumber}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-700">Amount Paid:</span>
+                        <span className="font-medium">Rs. {payment.receivedAmount.toFixed(2)}</span>
+                      </div>
+                      {payment.balance > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Balance:</span>
+                          <span className="font-medium text-green-600">Rs. {payment.balance.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Bill Summary - Mobile Responsive */}
             <div className="border-t border-gray-300 pt-3 mt-3">

@@ -33,6 +33,17 @@ export async function GET(
             },
           },
         },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            receivedAmount: true,
+            balance: true,
+            paymentDate: true,
+            paymentMode: true,
+            referenceNumber: true,
+          },
+        },
       },
     });
 

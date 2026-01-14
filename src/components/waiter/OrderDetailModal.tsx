@@ -21,8 +21,8 @@ interface OrderItem {
 }
 
 interface Order {
-  id: string;
-  tableNumber: number;
+  id: number | string;
+  tableNumber: number | null;
   status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'CANCELLED' | 'COMPLETED';
   totalAmount: number;
   notes: string | null;
@@ -144,7 +144,7 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Order Details</h2>
-            <p className="text-sm text-gray-600">Table {order.tableNumber} - Order #{order.id}</p>
+            <p className="text-sm text-gray-600">{order.tableNumber ? `Table ${order.tableNumber} - ` : ''}Order #{order.id}</p>
           </div>
           <button
             onClick={onClose}
@@ -161,7 +161,11 @@ export default function OrderDetailModal({ isOpen, onClose, order }: OrderDetail
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-700">
-                  <span className="font-medium">Table:</span> {order.tableNumber}
+                  {order.tableNumber && (
+                    <>
+                      <span className="font-medium">Table:</span> {order.tableNumber}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
