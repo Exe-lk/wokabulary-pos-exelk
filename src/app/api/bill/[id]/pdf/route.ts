@@ -34,6 +34,17 @@ export async function GET(
             },
           },
         },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            receivedAmount: true,
+            balance: true,
+            paymentDate: true,
+            paymentMode: true,
+            referenceNumber: true,
+          },
+        },
       },
     });
 
@@ -235,7 +246,8 @@ export async function GET(
             <div class="bill-info">
               <h2>BILL</h2>
               <p><strong>Bill #:</strong> ${order.id}</p>
-              <p><strong>Table:</strong> ${order.tableNumber}</p>
+              ${order.billNumber ? `<p><strong>Bill Number:</strong> ${order.billNumber}</p>` : ''}
+              ${order.tableNumber ? `<p><strong>Table:</strong> ${order.tableNumber}</p>` : ''}
               <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -287,16 +299,32 @@ export async function GET(
             </table>
           </div>
 
+          ${order.payments && order.payments.length > 0 ? `
+            <div class="order-items">
+              <h3>Payment Information</h3>
+              ${order.payments.map(payment => `
+                <div class="customer-info" style="margin-bottom: 15px;">
+                  <p><strong>Payment Mode:</strong> ${payment.paymentMode}</p>
+                  ${payment.referenceNumber ? `<p><strong>Reference Number:</strong> ${payment.referenceNumber}</p>` : ''}
+                  <p><strong>Amount Paid:</strong> Rs. ${payment.receivedAmount.toFixed(2)}</p>
+                  ${payment.balance > 0 ? `<p><strong>Balance:</strong> Rs. ${payment.balance.toFixed(2)}</p>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
           <div class="bill-summary">
             <table class="summary-table">
               <tr>
                 <td>Subtotal:</td>
                 <td class="text-right">Rs. ${subtotal.toFixed(2)}</td>
               </tr>
+              ${serviceChargeRate > 0 ? `
               <tr>
                 <td>Service Charge (${serviceChargeRate}%):</td>
                 <td class="text-right">Rs. ${serviceCharge.toFixed(2)}</td>
               </tr>
+              ` : ''}
               <tr class="total-row">
                 <td>Total:</td>
                 <td class="text-right">Rs. ${total.toFixed(2)}</td>

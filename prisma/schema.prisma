@@ -152,7 +152,7 @@ model FoodItemPortionIngredient {
 }
 
 model Order {
-  tableNumber   Int
+  tableNumber   Int?
   staffId       String
   status        OrderStatus @default(PENDING)
   totalAmount   Float       @default(0)
@@ -165,6 +165,7 @@ model Order {
   customerPhone String?
   customerId    String?
   billNumber    String?
+  orderType     OrderType   @default(DINE_IN)
   orderItems    OrderItem[]
   customer      Customer?   @relation(fields: [customerId], references: [id])
   staff         Staff       @relation(fields: [staffId], references: [id])
@@ -239,4 +240,10 @@ enum OrderStatus {
 enum PaymentMode {
   CASH
   CARD
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  ONLINE_ORDER
 }

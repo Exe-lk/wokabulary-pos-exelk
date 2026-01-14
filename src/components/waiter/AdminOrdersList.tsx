@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { showSuccessAlert } from '@/lib/sweetalert';
+import { showSuccessAlert, showErrorAlert } from '@/lib/sweetalert';
+import CashierBillModal from './CashierBillModal';
 import OrderDetailModal from './OrderDetailModal';
 
 interface OrderItem {
@@ -22,17 +23,22 @@ interface OrderItem {
 }
 
 interface Order {
-  id: string;
-  tableNumber: number;
+  id: number;
+  tableNumber: number | null;
   status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'CANCELLED' | 'COMPLETED';
   totalAmount: number;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  customerId: string | null;
   staff: {
     id: string;
     name: string;
     email: string;
+    role: string;
   };
   orderItems: OrderItem[];
   customer?: {
@@ -41,18 +47,31 @@ interface Order {
     phone: string;
     email?: string;
   };
+  payments?: Array<{
+    id: string;
+    paymentMode: string;
+    receivedAmount: number;
+    balance: number;
+    referenceNumber: string | null;
+  }>;
 }
 
-interface OrdersListProps {
-  staffId: string;
+interface AdminOrdersListProps {
+  userRole: string;
 }
 
-export default function OrdersList({ staffId }: OrdersListProps) {
+export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [servingOrderId, setServingOrderId] = useState<string | null>(null);
+  const [billModal, setBillModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({
+    isOpen: false,
+    order: null,
+  });
 
   const [detailModal, setDetailModal] = useState<{
     isOpen: boolean;
@@ -65,7 +84,12 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/waiter/orders?staffId=${staffId}`);
+      const params = new URLSearchParams();
+      if (statusFilter) {
+        params.append('status', statusFilter);
+      }
+      
+      const response = await fetch(`/api/admin/orders?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
@@ -78,97 +102,36 @@ export default function OrdersList({ staffId }: OrdersListProps) {
     }
   };
 
-  // Filter orders based on status filter, excluding completed and cancelled orders from "All Orders"
+  // Filter orders - show SERVED orders for cashiers to process bills
   const filteredOrders = orders.filter(order => {
     if (statusFilter === '') {
-      // For "All Orders" tab, exclude completed and cancelled orders
+      // For "All Orders" tab, show SERVED orders (unpaid bills) for cashiers
+      if (userRole === 'CASHIER' || userRole === 'admin') {
+        return order.status === 'SERVED';
+      }
+      // For others, exclude completed and cancelled
       return order.status !== 'COMPLETED' && order.status !== 'CANCELLED';
     }
-    // For specific status filters, show only orders with that status
     return order.status === statusFilter;
   });
 
-  const handleServeOrder = async (orderId: string) => {
-    try {
-      setServingOrderId(orderId);
-      const response = await fetch(`/api/waiter/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'SERVED' }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to serve order');
-      }
-
-      // Update the order in the local state
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === orderId ? { ...order, status: 'SERVED' } : order
-        )
-      );
-      showSuccessAlert('Order marked as served successfully!');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setServingOrderId(null);
-    }
-  };
-
-  const handleCancelOrder = async (orderId: string, orderNumber: string) => {
-    // Import Swal dynamically for complex dialog with textarea
-    const Swal = (await import('sweetalert2')).default;
-    
-    const result = await Swal.fire({
-      title: 'Cancel Order?',
-      text: `Are you sure you want to cancel Order #${orderNumber}? This action cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Yes, Cancel Order',
-      cancelButtonText: 'Keep Order',
-      input: 'textarea',
-      inputPlaceholder: 'Optional: Enter reason for cancellation...',
-      inputAttributes: {
-        'aria-label': 'Reason for cancellation'
-      }
+  const handleProcessBill = (order: Order) => {
+    setBillModal({
+      isOpen: true,
+      order,
     });
-
-    if (result.isConfirmed) {
-      try {
-        setServingOrderId(orderId); // Reuse the loading state
-        const response = await fetch(`/api/orders/${orderId}/cancel`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ reason: result.value || 'Cancelled by waiter' }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to cancel order');
-        }
-
-        // Update the order in the local state
-        setOrders(prevOrders =>
-          prevOrders.map(order =>
-            order.id === orderId ? { ...order, status: 'CANCELLED' } : order
-          )
-        );
-        showSuccessAlert('Order cancelled successfully!');
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setServingOrderId(null);
-      }
-    }
   };
 
+  const handleCloseBillModal = () => {
+    setBillModal({
+      isOpen: false,
+      order: null,
+    });
+  };
+
+  const handleBillCompleted = () => {
+    fetchOrders(); // Refresh orders
+  };
 
   const handleViewDetails = (order: Order) => {
     setDetailModal({
@@ -185,14 +148,8 @@ export default function OrdersList({ staffId }: OrdersListProps) {
   };
 
   useEffect(() => {
-    if (staffId) {
-      fetchOrders();
-    }
-  }, [staffId, statusFilter]);
-
-  const clearFilter = () => {
-    setStatusFilter('');
-  };
+    fetchOrders();
+  }, [statusFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -222,7 +179,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
       case 'READY':
         return 'Ready';
       case 'SERVED':
-        return 'Served';
+        return 'Served - Awaiting Payment';
       case 'COMPLETED':
         return 'Completed';
       case 'CANCELLED':
@@ -293,7 +250,14 @@ export default function OrdersList({ staffId }: OrdersListProps) {
     <div className="p-4">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">My Active Orders</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {(userRole === 'CASHIER' || userRole === 'admin') ? 'Unpaid Bills' : 'All Orders'}
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          {(userRole === 'CASHIER' || userRole === 'admin') 
+            ? 'Process payments and send bills for served orders'
+            : 'View and manage all orders'}
+        </p>
       </div>
 
       {/* Status Filter Tabs */}
@@ -308,37 +272,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Active Orders
-            </button>
-            <button
-              onClick={() => setStatusFilter('PENDING')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === 'PENDING' 
-                  ? 'bg-yellow-500 text-white shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Pending ({orders.filter(o => o.status === 'PENDING').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('PREPARING')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === 'PREPARING' 
-                  ? 'bg-blue-500 text-white shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Preparing ({orders.filter(o => o.status === 'PREPARING').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('READY')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === 'READY' 
-                  ? 'bg-green-500 text-white shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Ready ({orders.filter(o => o.status === 'READY').length})
+              {(userRole === 'CASHIER' || userRole === 'admin') ? 'Unpaid Bills' : 'Active Orders'}
             </button>
             <button
               onClick={() => setStatusFilter('SERVED')}
@@ -351,44 +285,28 @@ export default function OrdersList({ staffId }: OrdersListProps) {
               Served ({orders.filter(o => o.status === 'SERVED').length})
             </button>
             <button
-              onClick={() => setStatusFilter('CANCELLED')}
+              onClick={() => setStatusFilter('READY')}
               className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === 'CANCELLED' 
-                  ? 'bg-red-500 text-white shadow-sm' 
+                statusFilter === 'READY' 
+                  ? 'bg-green-500 text-white shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Cancelled ({orders.filter(o => o.status === 'CANCELLED').length})
+              Ready ({orders.filter(o => o.status === 'READY').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('PREPARING')}
+              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors ${
+                statusFilter === 'PREPARING' 
+                  ? 'bg-blue-500 text-white shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Preparing ({orders.filter(o => o.status === 'PREPARING').length})
             </button>
           </div>
         </div>
       </div>
-
-      {/* Filter Indicator */}
-      {statusFilter && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span className="text-sm font-medium text-blue-900">
-                Filtered: {filteredOrders.length} {statusFilter === 'PENDING' ? 'pending' : 
-                         statusFilter === 'PREPARING' ? 'preparing' : 
-                         statusFilter === 'READY' ? 'ready' : 
-                         statusFilter === 'SERVED' ? 'served' : 
-                         statusFilter === 'CANCELLED' ? 'cancelled' : ''} orders
-              </span>
-            </div>
-            <button
-              onClick={clearFilter}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Show Active
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
@@ -402,8 +320,10 @@ export default function OrdersList({ staffId }: OrdersListProps) {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
             <p className="text-gray-600">
               {statusFilter 
-                ? `No ${statusFilter.toLowerCase().replace('_', ' ')} orders at the moment.`
-                : "No active orders found. All orders are completed."
+                ? `No ${statusFilter.toLowerCase()} orders at the moment.`
+                : (userRole === 'CASHIER' || userRole === 'admin')
+                  ? "No unpaid bills at the moment."
+                  : "No active orders found."
               }
             </p>
           </div>
@@ -431,9 +351,11 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                 
                 <div className="text-sm text-gray-600 mb-2">
                   <div className="flex items-center space-x-4">
-                    <span>Table {order.tableNumber}</span>
-                    <span>•</span>
+                    {order.tableNumber && <span>Table {order.tableNumber}</span>}
+                    {order.tableNumber && <span>•</span>}
                     <span>{formatTime(order.createdAt)}</span>
+                    <span>•</span>
+                    <span>Waiter: {order.staff.name}</span>
                     {order.customer && (
                       <>
                         <span>•</span>
@@ -493,7 +415,7 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                           Rs. {item.totalPrice.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-600">
-                                                      Rs. {item.unitPrice.toFixed(2)} each
+                          Rs. {item.unitPrice.toFixed(2)} each
                         </p>
                       </div>
                     </div>
@@ -501,75 +423,66 @@ export default function OrdersList({ staffId }: OrdersListProps) {
                 </div>
               </div>
 
-              {/* Action Buttons - Only show for non-completed orders */}
-              {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
-                <div className="p-4 border-t border-gray-200">
-                  <div className="flex space-x-3">
-                    {/* Serve Order Button - Only for READY orders */}
-                    {order.status === 'READY' && (
-                      <button
-                        onClick={() => handleServeOrder(order.id)}
-                        disabled={servingOrderId === order.id}
-                        className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                      >
-                        {servingOrderId === order.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Serving...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Serve Order
-                          </>
-                        )}
-                      </button>
-                    )}
+              {/* Action Buttons */}
+              <div className="p-4 border-t border-gray-200">
+                <div className="flex space-x-3">
+                  {/* Mark as Served Button - For READY orders */}
+                  {(userRole === 'CASHIER' || userRole === 'admin') && order.status === 'READY' && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(`/api/waiter/orders/${order.id}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'SERVED' }),
+                          });
+                          if (response.ok) {
+                            showSuccessAlert('Order marked as served successfully!');
+                            fetchOrders();
+                          } else {
+                            const errorData = await response.json();
+                            showErrorAlert(errorData.error || 'Failed to mark order as served');
+                          }
+                        } catch (err: any) {
+                          showErrorAlert(err.message || 'Failed to mark order as served');
+                        }
+                      }}
+                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Mark as Served
+                    </button>
+                  )}
 
-                    {/* Cancel Order Button - Only for PREPARING orders */}
-                    {order.status === 'PREPARING' && (
-                      <button
-                        onClick={() => handleCancelOrder(order.id, order.id)}
-                        disabled={servingOrderId === order.id}
-                        className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                      >
-                        {servingOrderId === order.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Cancelling...
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Cancel Order
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    {/* Show Bill Button - Only for SERVED orders (view only, no sending) */}
-                    {order.status === 'SERVED' && (
-                      <button
-                        onClick={() => handleViewDetails(order)}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View Bill
-                      </button>
-                    )}
-                  </div>
+                  {/* Process Payment Button - For SERVED orders */}
+                  {(userRole === 'CASHIER' || userRole === 'admin') && order.status === 'SERVED' && (
+                    <button
+                      onClick={() => handleProcessBill(order)}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Process Payment & Send Bill
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Cashier Bill Modal */}
+      {billModal.order && (
+        <CashierBillModal
+          isOpen={billModal.isOpen}
+          onClose={handleCloseBillModal}
+          order={billModal.order}
+          onBillCompleted={handleBillCompleted}
+        />
       )}
 
       {/* Order Detail Modal */}
@@ -582,4 +495,4 @@ export default function OrdersList({ staffId }: OrdersListProps) {
       )}
     </div>
   );
-} 
+}

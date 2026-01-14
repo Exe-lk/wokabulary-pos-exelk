@@ -65,6 +65,15 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        payments: {
+          select: {
+            id: true,
+            paymentMode: true,
+            receivedAmount: true,
+            balance: true,
+            referenceNumber: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
