@@ -43,8 +43,8 @@ export default function AddIngredientMaster({ isOpen, onClose, onIngredientAdded
       onIngredientAdded();
       onClose();
       showSuccessAlert('Ingredient created successfully!');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create ingredient');
     } finally {
       setIsLoading(false);
     }

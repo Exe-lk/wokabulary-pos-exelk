@@ -39,8 +39,8 @@ export default function AddCategoryModal({ isOpen, onClose, onCategoryAdded }: A
       onCategoryAdded();
       onClose();
       showSuccessAlert('Category created successfully!');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create category');
     } finally {
       setIsLoading(false);
     }

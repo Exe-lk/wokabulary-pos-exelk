@@ -73,8 +73,8 @@ export default function EditCustomerModal({
 
       onCustomerUpdated();
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update customer');
     } finally {
       setIsLoading(false);
     }

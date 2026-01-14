@@ -53,8 +53,8 @@ export default function EditCategoryModal({ isOpen, onClose, onCategoryUpdated, 
       onCategoryUpdated();
       onClose();
       showSuccessAlert('Category updated successfully!');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update category');
     } finally {
       setIsLoading(false);
     }

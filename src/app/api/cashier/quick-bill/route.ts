@@ -160,7 +160,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Reduce ingredient stock
     for (const [ingredientId, requiredQuantity] of ingredientReductions) {
       await prisma.ingredient.update({
         where: { id: ingredientId },
