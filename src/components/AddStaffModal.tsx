@@ -87,8 +87,8 @@ export default function AddStaffModal({ isOpen, onClose, onStaffAdded }: AddStaf
       setIsSuccess(true);
       onStaffAdded();
 
-    } catch (err: any) {
-      setError(err.message || "Failed to create staff member");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create staff member");
       setGeneratedPassword("");
     } finally {
       setIsLoading(false);

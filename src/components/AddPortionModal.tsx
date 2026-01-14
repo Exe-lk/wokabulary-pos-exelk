@@ -81,8 +81,8 @@ export default function AddPortionModal({ isOpen, onClose, onPortionAdded }: Add
       onClose();
       showSuccessAlert('Portion created successfully!');
 
-    } catch (err: any) {
-      setError(err.message || "Failed to create portion");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create portion");
     } finally {
       setIsLoading(false);
     }

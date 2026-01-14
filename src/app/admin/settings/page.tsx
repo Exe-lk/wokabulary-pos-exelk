@@ -62,7 +62,7 @@ export default function SettingsPage() {
       setIsSaving(true);
       await updateServiceChargeRate(rate);
       showSuccessAlert('Service charge rate updated successfully!');
-    } catch (error) {
+    } catch {
       showErrorAlert('Failed to update service charge rate');
     } finally {
       setIsSaving(false);
