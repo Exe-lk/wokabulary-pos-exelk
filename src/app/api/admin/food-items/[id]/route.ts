@@ -4,10 +4,10 @@ import { prisma } from '@/lib/prisma';
 // Update a food item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, description, imageUrl, categoryId, portions, isActive } = body;
 
@@ -140,10 +140,10 @@ export async function PUT(
 // Delete a food item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check if food item exists
     const existingItem = await prisma.foodItem.findUnique({

@@ -660,8 +660,8 @@ export default function QuickBillModal({
                       />
                     </div>
 
-                    {errors.items && (
-                      <div className="mb-4 text-red-500 text-sm">{errors.items}</div>
+                    {(errors as any).items && (
+                      <div className="mb-4 text-red-500 text-sm">{(errors as any).items}</div>
                     )}
                   </div>
                 </div>

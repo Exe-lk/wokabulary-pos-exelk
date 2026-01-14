@@ -10,6 +10,9 @@
     "lint": "next lint",
     "netlify-build": "prisma generate && yarn build"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
