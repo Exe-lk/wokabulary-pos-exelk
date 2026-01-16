@@ -240,11 +240,41 @@ export default function WaiterOrdersPage() {
 
       const newOrder = await response.json();
 
-      // Show success message
+      // Build success message with payment details
       const paymentModeText = orderData.paymentData.paymentMode === 'CASH' ? 'Cash' : 'Card';
       const balanceText = orderData.paymentData.balance > 0 ? ` (Balance: Rs. ${orderData.paymentData.balance.toFixed(2)})` : '';
       const refText = orderData.paymentData.referenceNumber ? ` (Ref: ${orderData.paymentData.referenceNumber})` : '';
-      showSuccessAlert(`Quick bill created successfully! Bill #${newOrder.billNumber}. Payment: ${paymentModeText}${refText}${balanceText}`);
+      
+      let successMessage = `Quick bill created successfully! Bill #${newOrder.billNumber}. Payment: ${paymentModeText}${refText}${balanceText}`;
+      
+      // Add email and SMS status to success message
+      const emailStatus = newOrder.emailResult;
+      const smsStatus = newOrder.smsResult;
+      
+      if (emailStatus || smsStatus) {
+        successMessage += '\n\n';
+        const statusParts = [];
+        
+        if (emailStatus) {
+          if (emailStatus.success) {
+            statusParts.push(`📧 Email sent to: ${orderData.customerData.email}`);
+          } else {
+            statusParts.push(`📧 Email failed: ${emailStatus.error || 'Unknown error'}`);
+          }
+        }
+        
+        if (smsStatus) {
+          if (smsStatus.success) {
+            statusParts.push(`📱 SMS sent to: ${orderData.customerData.phone}`);
+          } else {
+            statusParts.push(`📱 SMS failed: ${smsStatus.error || 'Unknown error'}`);
+          }
+        }
+        
+        successMessage += statusParts.join('\n');
+      }
+      
+      showSuccessAlert(successMessage);
       
       setShowQuickBillModal(false);
       

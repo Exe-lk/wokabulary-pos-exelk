@@ -54,6 +54,7 @@ export default function BillPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [downloadError, setDownloadError] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [serviceChargeRate, setServiceChargeRate] = useState(0);
 
@@ -93,23 +94,48 @@ export default function BillPage() {
 
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
+    setDownloadError('');
     try {
       const response = await fetch(`/api/bill/${orderId}/pdf`);
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to generate PDF' }));
+        throw new Error(errorData.error || 'Failed to generate PDF');
+      }
+      
+      // Check if response is actually a PDF
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/pdf')) {
+        throw new Error('Invalid response format. Expected PDF.');
       }
       
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      
+      // Verify blob is not empty
+      if (blob.size === 0) {
+        throw new Error('PDF file is empty');
+      }
+      
+      // Create download using blob URL
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
+      link.href = blobUrl;
       link.download = `bill-${orderId}.pdf`;
+      
+      // Ensure link is in the document
       document.body.appendChild(link);
+      
+      // Trigger the download
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+      
     } catch (err: any) {
       console.error('Error downloading PDF:', err);
+      setDownloadError(err.message || 'Failed to download PDF. Please try again.');
     } finally {
       setIsDownloading(false);
     }
@@ -402,10 +428,15 @@ export default function BillPage() {
 
         {/* Download Button - Mobile Responsive */}
         <div className="mt-3 sm:mt-4 text-center px-4">
+          {downloadError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {downloadError}
+            </div>
+          )}
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-sm sm:text-base"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-sm sm:text-base mx-auto"
           >
             {isDownloading ? (
               <>
