@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AddStaffModal from "@/components/AddStaffModal";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface StaffUser {
   id: string;
@@ -339,15 +340,17 @@ export default function ManageUsers() {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEditUser(user.id)}
-                        className="text-purple-600 hover:text-purple-900"
+                        className="inline-flex items-center justify-center p-2 text-purple-600 hover:text-purple-900 rounded-md hover:bg-purple-50 transition-colors"
+                        title="Edit"
                       >
-                        Edit
+                        <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 rounded-md hover:bg-red-50 transition-colors"
+                        title="Delete"
                       >
-                        Delete
+                        <FaTrash className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

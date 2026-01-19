@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AddCategoryModal from "@/components/AddCategoryModal";
 import EditCategoryModal from "@/components/EditCategoryModal";
 import { showErrorAlert, showConfirmDialog } from "@/lib/sweetalert";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface Category {
   id: string;
@@ -253,15 +254,17 @@ export default function ManageCategories() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEditCategory(category)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"                      
-                            >
-                          Edit
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          title="Edit"
+                        >
+                          <FaEdit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteCategory(category.id)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          title="Delete"
                         >
-                          Delete
+                          <FaTrash className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
