@@ -173,18 +173,18 @@ export default function ManageCategories() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Category Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
               <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food categories</p>
             </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleAddCategory}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center justify-center"
+                title="Add Category"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Add Category</span>
               </button>
             </div>
           </div>

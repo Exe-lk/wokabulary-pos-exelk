@@ -326,7 +326,7 @@ export default function ManageCategories() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ingredient Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ingredient Master</h1>
             <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
           </div>
         </div>
@@ -399,15 +399,15 @@ export default function ManageCategories() {
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <button
-              onClick={handleAddIngredient}
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2 whitespace-nowrap"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Add Ingredient</span>
-            </button>
+              <button
+                onClick={handleAddIngredient}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center justify-center"
+                title="Add Ingredient"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
           </div>
         </div>
 
@@ -553,13 +553,16 @@ export default function ManageCategories() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleAddStock(ingredient)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                          title="Add Stock"
                         >
-                          Add Stock
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleStockOut(ingredient)}
-                          className={`inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md transition-colors
+                          className={`inline-flex items-center justify-center p-2 border border-transparent rounded-md transition-colors
     ${ingredient.currentStockQuantity <= 0
                               ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                               : 'text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
@@ -568,10 +571,12 @@ export default function ManageCategories() {
                           title={
                             ingredient.currentStockQuantity <= 0
                               ? 'No stock available to stock out'
-                              : 'Stock out this ingredient'
+                              : 'Stock Out'
                           }
                         >
-                          Stock Out
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                          </svg>
                         </button>
 
                         <button
