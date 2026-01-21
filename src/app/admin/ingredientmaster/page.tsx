@@ -8,6 +8,7 @@ import AddStockModal from "@/components/AddStockModal";
 import StockOutModal from "@/components/StockOutModal";
 import { showCustomAlert, showErrorAlert, showConfirmDialog } from '@/lib/sweetalert';
 import Swal from 'sweetalert2';
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface Ingredient {
   id: string;
@@ -324,42 +325,9 @@ export default function ManageCategories() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Ingredient Management</h1>
-              <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleAddIngredient}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add Ingredient</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="relative max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search ingredients by name, description, or unit..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Ingredient Master</h1>
+            <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
           </div>
         </div>
       </div>
@@ -411,6 +379,35 @@ export default function ManageCategories() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Search Bar and Add Ingredient Button */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="relative flex-1 max-w-md w-full">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search ingredients by name, description, or unit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+              <button
+                onClick={handleAddIngredient}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center justify-center"
+                title="Add Ingredient"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
           </div>
         </div>
 
@@ -556,13 +553,16 @@ export default function ManageCategories() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleAddStock(ingredient)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                          title="Add Stock"
                         >
-                          Add Stock
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => handleStockOut(ingredient)}
-                          className={`inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md transition-colors
+                          className={`inline-flex items-center justify-center p-2 border border-transparent rounded-md transition-colors
     ${ingredient.currentStockQuantity <= 0
                               ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                               : 'text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
@@ -571,23 +571,27 @@ export default function ManageCategories() {
                           title={
                             ingredient.currentStockQuantity <= 0
                               ? 'No stock available to stock out'
-                              : 'Stock out this ingredient'
+                              : 'Stock Out'
                           }
                         >
-                          Stock Out
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                          </svg>
                         </button>
 
                         <button
                           onClick={() => handleEditIngredient(ingredient)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          title="Edit"
                         >
-                          Edit
+                          <FaEdit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteIngredient(ingredient.id)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          title="Delete"
                         >
-                          Delete
+                          <FaTrash className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

@@ -145,17 +145,35 @@ export default function WaiterOrdersPage() {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
       return;
     }
-    setShowCustomerModal(true);
+    
+    // If admin or cashier, place order directly without customer details/payment
+    if (adminUser.role === 'CASHIER' || adminUser.role === 'admin') {
+      handlePlaceOrderDirectly();
+    } else {
+      // For waiters, show customer details modal
+      setShowCustomerModal(true);
+    }
   };
 
-  const handleCustomerModalConfirm = async (customerData: CustomerData, paymentData: PaymentData, waiterId?: string) => {
+  const handleCustomerModalConfirm = async (customerData: CustomerData | null, paymentData: PaymentData | null, waiterId?: string) => {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
       return;
     }
 
-    // If admin/cashier is placing order, they must select a waiter
-    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin') && !waiterId) {
-      showErrorAlert('Please select a waiter for this order');
+    // If admin/cashier is placing order, they only need waiter selection (no customer/payment)
+    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin')) {
+      if (!waiterId) {
+        showErrorAlert('Please select a waiter for this order');
+        return;
+      }
+      // Place order without customer/payment data
+      await handlePlaceOrderDirectly(waiterId);
+      return;
+    }
+
+    // For waiters, require customer and payment data
+    if (!customerData || !paymentData) {
+      showErrorAlert('Customer details and payment information are required');
       return;
     }
 
@@ -209,6 +227,65 @@ export default function WaiterOrdersPage() {
 
   const handleCustomerModalClose = () => {
     setShowCustomerModal(false);
+  };
+
+  const handlePlaceOrderDirectly = async (waiterId?: string) => {
+    if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
+      return;
+    }
+
+    // If admin/cashier is placing order, they must select a waiter
+    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin') && !waiterId) {
+      // Show waiter selection modal
+      setShowCustomerModal(true);
+      return;
+    }
+
+    setIsPlacingOrder(true);
+    try {
+      // Use waiterId if provided (for admin/cashier), otherwise use adminUser.id
+      const finalStaffId = waiterId || adminUser.id;
+
+      const orderData = {
+        tableNumber: orderState.tableNumber,
+        staffId: finalStaffId,
+        items: orderState.items.map(item => ({
+          foodItemId: item.foodItemId,
+          portionId: item.portionId,
+          quantity: item.quantity,
+          specialRequests: item.specialRequests
+        })),
+        notes: orderState.notes,
+        // No customerData or paymentData for admin/cashier - will be collected later
+        customerData: null,
+        paymentData: null
+      };
+
+      const response = await fetch('/api/waiter/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to place order');
+      }
+
+      const newOrder = await response.json();
+
+      // Show success message and clear order
+      showSuccessAlert(`Order placed successfully for Table ${orderState.tableNumber}! Order #${newOrder.id}. Customer details and payment will be collected when order is served.`);
+      dispatch(clearOrder());
+      setShowCustomerModal(false);
+
+    } catch (error: any) {
+      showErrorAlert(`Failed to place order: ${error.message}`);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   const handleQuickBillConfirm = async (orderData: any) => {
@@ -427,22 +504,22 @@ export default function WaiterOrdersPage() {
               {adminUser && (adminUser.role === 'CASHIER' || adminUser.role === 'admin') && (
                 <button
                   onClick={() => setShowQuickBillModal(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                  className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                  title="Create Bill"
                 >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Create Bill
                 </button>
               )}
               <button
                 onClick={fetchFoodItems}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                title="Refresh"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Refresh
               </button>
             </div>
           </div>

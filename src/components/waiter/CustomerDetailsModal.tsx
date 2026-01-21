@@ -7,7 +7,7 @@ import { X, User, Phone, Mail, CreditCard, DollarSign } from 'lucide-react';
 interface CustomerDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (customerData: CustomerData, paymentData: PaymentData, waiterId?: string) => void;
+  onConfirm: (customerData: CustomerData | null, paymentData: PaymentData | null, waiterId?: string) => void;
   totalAmount: number;
   isProcessing: boolean;
   showWaiterSelection?: boolean;
@@ -70,6 +70,32 @@ export default function CustomerDetailsModal({
   const validateForm = (values: FormValues) => {
     const errors: any = {};
 
+    // If showWaiterSelection is true (admin/cashier), only require waiter selection
+    if (showWaiterSelection) {
+      if (!values.waiterId) {
+        errors.waiterId = 'Please select a waiter for this order';
+      }
+      // Customer and payment fields are optional for admin/cashier
+      // Only validate if they are filled
+      if (values.phone && !/^[0-9]{10,}$/.test(values.phone.replace(/\s/g, ''))) {
+        errors.phone = 'Please enter a valid phone number (minimum 10 digits)';
+      }
+      if (values.name && values.name.trim().length < 2) {
+        errors.name = 'Name must be at least 2 characters long';
+      }
+      if (values.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+        errors.email = 'Please enter a valid email address';
+      }
+      if (values.receivedAmount && values.receivedAmount < totalAmount) {
+        errors.receivedAmount = `Amount received must be at least Rs. ${totalAmount.toFixed(2)}`;
+      }
+      if (values.paymentMode === 'CARD' && values.referenceNumber && !values.referenceNumber.trim()) {
+        errors.referenceNumber = 'Reference number is required for card payments';
+      }
+      return errors;
+    }
+
+    // For waiters, all fields are required
     // Phone validation
     if (!values.phone) {
       errors.phone = 'Phone number is required';
@@ -97,11 +123,6 @@ export default function CustomerDetailsModal({
     // Reference number validation for card payments
     if (values.paymentMode === 'CARD' && !values.referenceNumber?.trim()) {
       errors.referenceNumber = 'Reference number is required for card payments';
-    }
-
-    // Waiter selection validation if needed
-    if (showWaiterSelection && !values.waiterId) {
-      errors.waiterId = 'Please select a waiter for this order';
     }
 
     return errors;
@@ -137,6 +158,13 @@ export default function CustomerDetailsModal({
   };
 
   const handleSubmit = (values: FormValues) => {
+    // For admin/cashier (showWaiterSelection), don't require customer/payment data
+    if (showWaiterSelection) {
+      onConfirm(null, null, values.waiterId);
+      return;
+    }
+
+    // For waiters, require customer and payment data
     const customerData: CustomerData = {
       name: values.name,
       email: values.email,
@@ -188,8 +216,15 @@ export default function CustomerDetailsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Customer Details</h2>
-            <p className="text-sm text-gray-600">Complete order for Rs. {totalAmount.toFixed(2)}</p>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {showWaiterSelection ? 'Place Order' : 'Customer Details'}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {showWaiterSelection 
+                ? `Select waiter for order - Rs. ${totalAmount.toFixed(2)}`
+                : `Complete order for Rs. ${totalAmount.toFixed(2)}`
+              }
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -207,7 +242,8 @@ export default function CustomerDetailsModal({
         >
           {({ values, errors, touched, setFieldValue, handleChange, handleBlur, isValid, dirty }) => (
             <Form className="p-6">
-              {/* Customer Information */}
+              {/* Customer Information - Hide for admin/cashier */}
+              {!showWaiterSelection && (
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
                 
@@ -286,8 +322,10 @@ export default function CustomerDetailsModal({
                   <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
                 </div>
               </div>
+              )}
 
-              {/* Payment Information */}
+              {/* Payment Information - Hide for admin/cashier */}
+              {!showWaiterSelection && (
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
                 
@@ -389,11 +427,13 @@ export default function CustomerDetailsModal({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Waiter Selection - Only show if showWaiterSelection is true */}
               {showWaiterSelection && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Assign Waiter</h3>
+                  <p className="text-sm text-gray-600 mb-4">Select a waiter for this order. Customer details and payment will be collected when the order is served and billed.</p>
                   
                   <div className="mb-4">
                     <label htmlFor="waiterId" className="block text-sm font-medium text-gray-700 mb-1">
@@ -442,7 +482,13 @@ export default function CustomerDetailsModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing || !isValid || !dirty}
+                  disabled={
+                    isProcessing || 
+                    (showWaiterSelection 
+                      ? !values.waiterId  // For admin/cashier, only check waiter selection
+                      : (!isValid || !dirty)  // For waiters, check full form validity
+                    )
+                  }
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                 >
                   {isProcessing ? (

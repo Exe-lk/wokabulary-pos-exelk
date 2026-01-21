@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AddCategoryModal from "@/components/AddCategoryModal";
 import EditCategoryModal from "@/components/EditCategoryModal";
 import { showErrorAlert, showConfirmDialog } from "@/lib/sweetalert";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface Category {
   id: string;
@@ -172,18 +173,18 @@ export default function ManageCategories() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Category Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
               <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food categories</p>
             </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleAddCategory}
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center space-x-2"
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors flex items-center justify-center"
+                title="Add Category"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Add Category</span>
               </button>
             </div>
           </div>
@@ -253,15 +254,17 @@ export default function ManageCategories() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEditCategory(category)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"                      
-                            >
-                          Edit
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          title="Edit"
+                        >
+                          <FaEdit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteCategory(category.id)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          title="Delete"
                         >
-                          Delete
+                          <FaTrash className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
