@@ -325,9 +325,9 @@ export default function ManageCategories() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div>
+            <div>
             <h1 className="text-2xl font-bold text-gray-900">Ingredient Master</h1>
-            <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
+              <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your food ingredients and stock</p>
           </div>
         </div>
       </div>
@@ -581,14 +581,14 @@ export default function ManageCategories() {
 
                         <button
                           onClick={() => handleEditIngredient(ingredient)}
-                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 text-purple-600 hover:text-purple-900 rounded-md hover:bg-purple-50 transition-colors"
                           title="Edit"
                         >
                           <FaEdit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteIngredient(ingredient.id)}
-                          className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 rounded-md hover:bg-red-50 transition-colors"
                           title="Delete"
                         >
                           <FaTrash className="w-4 h-4" />
@@ -600,35 +600,6 @@ export default function ManageCategories() {
               </tbody>
             </table>
 
-            {filteredIngredients.length === 0 && (
-              <div className="text-center py-12">
-                {searchTerm ? (
-                  <>
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No ingredients found</h3>
-                    <p className="mt-1 text-sm text-gray-500">Try adjusting your search terms.</p>
-                  </>
-                ) : (
-                  <>
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No ingredients</h3>
-                    <p className="mt-1 text-sm text-gray-500">Get started by creating your first ingredient.</p>
-                    <div className="mt-6">
-                      <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-colors"
-                      >
-                        Add Ingredient
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

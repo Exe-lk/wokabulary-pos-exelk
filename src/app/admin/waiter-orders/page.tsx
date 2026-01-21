@@ -147,11 +147,11 @@ export default function WaiterOrdersPage() {
     }
     
     // If admin or cashier, place order directly without customer details/payment
-    if (adminUser.role === 'CASHIER' || adminUser.role === 'admin') {
+    if (adminUser.role === 'CASHIER' || adminUser.role === 'admin' || adminUser.role === 'MANAGER') {
       handlePlaceOrderDirectly();
     } else {
       // For waiters, show customer details modal
-      setShowCustomerModal(true);
+    setShowCustomerModal(true);
     }
   };
 
@@ -163,7 +163,7 @@ export default function WaiterOrdersPage() {
     // If admin/cashier is placing order, they only need waiter selection (no customer/payment)
     if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin')) {
       if (!waiterId) {
-        showErrorAlert('Please select a waiter for this order');
+      showErrorAlert('Please select a waiter for this order');
         return;
       }
       // Place order without customer/payment data

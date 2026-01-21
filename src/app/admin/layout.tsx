@@ -107,21 +107,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </svg>
               </button>
               <div className="hidden lg:block">
-              {/*  <h1 className="text-lg font-semibold text-gray-900">
-                  {pathname === '/admin/dashboard' && 'Dashboard'}
-                  {pathname === '/admin/users' && 'User Management'}
-                  {pathname === '/admin/items' && 'Item Management'}
-                  {pathname === '/admin/categories' && 'Category Management'}
-                  {pathname === '/admin/portions' && 'Portion Management'}
-                  {pathname === '/admin/orders' && 'Order Management'}
-                  {pathname === '/admin/customers' && 'Customer Management'}
-                  {pathname === '/admin/waiter-orders' && 'Bill Management'}
-                  {pathname === '/admin/kitchen' && 'Orders'}
-                  {pathname === '/admin/reports' && 'Reports & Analytics'}
-                  {pathname === '/admin/settings' && 'System Settings'}
-                  {pathname === '/admin/ingredientmaster' && 'Ingredient Master'}
-                </h1> */}
-                <p className="text-sm text-gray-600">Wokabulary Restaurant Management System</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -134,7 +119,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{adminUser.name}</p>
                   <p className="text-xs text-gray-500">
-                    {adminUser.role === 'CASHIER' ? 'Cashier' : 'Administrator'}
+                    {adminUser.role === 'CASHIER' ? 'Cashier' : adminUser.role === 'MANAGER' ? 'Manager' : 'Administrator'}
                   </p>
                 </div>
               </div>

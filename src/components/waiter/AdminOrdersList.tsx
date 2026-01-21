@@ -106,7 +106,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
   const filteredOrders = orders.filter(order => {
     if (statusFilter === '') {
       // For "All Orders" tab, show SERVED orders (unpaid bills) for cashiers
-      if (userRole === 'CASHIER' || userRole === 'admin') {
+      if (userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER') {
         return order.status === 'SERVED';
       }
       // For others, exclude completed and cancelled
@@ -251,7 +251,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">
-          {(userRole === 'CASHIER' || userRole === 'admin') ? 'Unpaid Bills' : 'All Orders'}
+          {(userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER') ? 'Unpaid Bills' : 'All Orders'}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
           {(userRole === 'CASHIER' || userRole === 'admin') 
@@ -272,7 +272,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              {(userRole === 'CASHIER' || userRole === 'admin') ? 'Unpaid Bills' : 'Active Orders'}
+              {(userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER') ? 'Unpaid Bills' : 'Active Orders'}
             </button>
             <button
               onClick={() => setStatusFilter('SERVED')}
@@ -321,7 +321,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
             <p className="text-gray-600">
               {statusFilter 
                 ? `No ${statusFilter.toLowerCase()} orders at the moment.`
-                : (userRole === 'CASHIER' || userRole === 'admin')
+                : (userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER')
                   ? "No unpaid bills at the moment."
                   : "No active orders found."
               }
@@ -427,7 +427,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
               <div className="p-4 border-t border-gray-200">
                 <div className="flex space-x-3">
                   {/* Mark as Served Button - For READY orders */}
-                  {(userRole === 'CASHIER' || userRole === 'admin') && order.status === 'READY' && (
+                  {(userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER') && order.status === 'READY' && (
                     <button
                       onClick={async () => {
                         try {
@@ -457,7 +457,7 @@ export default function AdminOrdersList({ userRole }: AdminOrdersListProps) {
                   )}
 
                   {/* Process Payment Button - For SERVED orders */}
-                  {(userRole === 'CASHIER' || userRole === 'admin') && order.status === 'SERVED' && (
+                  {(userRole === 'CASHIER' || userRole === 'admin' || userRole === 'MANAGER') && order.status === 'SERVED' && (
                     <button
                       onClick={() => handleProcessBill(order)}
                       className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center"

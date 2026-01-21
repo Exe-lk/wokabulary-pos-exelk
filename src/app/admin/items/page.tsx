@@ -244,7 +244,7 @@ export default function ManageItems() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Food Items Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Food Items</h1>
             <p className="text-sm text-gray-500 mt-1">Add, edit, and manage your menu items</p>
           </div>
         </div>
@@ -538,17 +538,17 @@ export default function ManageItems() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleEditItem(item.id)}
-                              className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                              className="inline-flex items-center justify-center p-2 text-purple-600 hover:text-purple-900 rounded-md hover:bg-purple-50 transition-colors"
                               title="Edit"
                             >
                               <FaEdit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => toggleItemStatus(item.id, !item.isActive)}
-                              className={`inline-flex items-center justify-center p-2 border border-transparent rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                              className={`inline-flex items-center justify-center p-2 rounded-md transition-colors ${
                                 item.isActive
-                                  ? 'text-red-700 bg-red-100 hover:bg-red-200 focus:ring-red-500'
-                                  : 'text-green-700 bg-green-100 hover:bg-green-200 focus:ring-green-500'
+                                  ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                                  : 'text-green-600 hover:text-green-900 hover:bg-green-50'
                               }`}
                               title={item.isActive ? 'Disable' : 'Enable'}
                             >
@@ -556,7 +556,7 @@ export default function ManageItems() {
                             </button>
                             <button
                               onClick={() => handleDeleteItem(item.id)}
-                              className="inline-flex items-center justify-center p-2 border border-transparent rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                              className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 rounded-md hover:bg-red-50 transition-colors"
                               title="Delete"
                             >
                               <FaTrash className="w-4 h-4" />
@@ -569,30 +569,6 @@ export default function ManageItems() {
               </table>
             </div>
 
-            {filteredItems.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Food Items Found</h3>
-                <p className="text-gray-500">
-                  {searchTerm 
-                    ? `No items match "${searchTerm}". Try adjusting your search.`
-                    : 'Food items will appear here when they are added.'
-                  }
-                </p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="mt-4 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Clear search
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

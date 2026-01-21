@@ -249,7 +249,7 @@ export default function AdminSidebar({
           <nav className="flex-1 overflow-y-auto px-2 py-4">
             <div className="space-y-1">
               {navigationItems
-                .filter((item) => !item.adminOnly || userRole === 'admin')
+                .filter((item) => !item.adminOnly || userRole === 'admin' || userRole === 'MANAGER')
                 .map((item) => {
                   const isActive = pathname === item.href;
                   return (
