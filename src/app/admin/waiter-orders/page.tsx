@@ -145,17 +145,35 @@ export default function WaiterOrdersPage() {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
       return;
     }
-    setShowCustomerModal(true);
+    
+    // If admin or cashier, place order directly without customer details/payment
+    if (adminUser.role === 'CASHIER' || adminUser.role === 'admin') {
+      handlePlaceOrderDirectly();
+    } else {
+      // For waiters, show customer details modal
+      setShowCustomerModal(true);
+    }
   };
 
-  const handleCustomerModalConfirm = async (customerData: CustomerData, paymentData: PaymentData, waiterId?: string) => {
+  const handleCustomerModalConfirm = async (customerData: CustomerData | null, paymentData: PaymentData | null, waiterId?: string) => {
     if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
       return;
     }
 
-    // If admin/cashier is placing order, they must select a waiter
-    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin') && !waiterId) {
-      showErrorAlert('Please select a waiter for this order');
+    // If admin/cashier is placing order, they only need waiter selection (no customer/payment)
+    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin')) {
+      if (!waiterId) {
+        showErrorAlert('Please select a waiter for this order');
+        return;
+      }
+      // Place order without customer/payment data
+      await handlePlaceOrderDirectly(waiterId);
+      return;
+    }
+
+    // For waiters, require customer and payment data
+    if (!customerData || !paymentData) {
+      showErrorAlert('Customer details and payment information are required');
       return;
     }
 
@@ -209,6 +227,65 @@ export default function WaiterOrdersPage() {
 
   const handleCustomerModalClose = () => {
     setShowCustomerModal(false);
+  };
+
+  const handlePlaceOrderDirectly = async (waiterId?: string) => {
+    if (!orderState.tableNumber || orderState.items.length === 0 || !adminUser) {
+      return;
+    }
+
+    // If admin/cashier is placing order, they must select a waiter
+    if ((adminUser.role === 'CASHIER' || adminUser.role === 'admin') && !waiterId) {
+      // Show waiter selection modal
+      setShowCustomerModal(true);
+      return;
+    }
+
+    setIsPlacingOrder(true);
+    try {
+      // Use waiterId if provided (for admin/cashier), otherwise use adminUser.id
+      const finalStaffId = waiterId || adminUser.id;
+
+      const orderData = {
+        tableNumber: orderState.tableNumber,
+        staffId: finalStaffId,
+        items: orderState.items.map(item => ({
+          foodItemId: item.foodItemId,
+          portionId: item.portionId,
+          quantity: item.quantity,
+          specialRequests: item.specialRequests
+        })),
+        notes: orderState.notes,
+        // No customerData or paymentData for admin/cashier - will be collected later
+        customerData: null,
+        paymentData: null
+      };
+
+      const response = await fetch('/api/waiter/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to place order');
+      }
+
+      const newOrder = await response.json();
+
+      // Show success message and clear order
+      showSuccessAlert(`Order placed successfully for Table ${orderState.tableNumber}! Order #${newOrder.id}. Customer details and payment will be collected when order is served.`);
+      dispatch(clearOrder());
+      setShowCustomerModal(false);
+
+    } catch (error: any) {
+      showErrorAlert(`Failed to place order: ${error.message}`);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   const handleQuickBillConfirm = async (orderData: any) => {
